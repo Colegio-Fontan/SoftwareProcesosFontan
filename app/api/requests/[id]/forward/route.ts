@@ -12,15 +12,16 @@ const forwardRequestSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await getAuthUser(request);
   if (!user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
 
   try {
-    const requestId = parseInt(params.id);
+    const requestId = parseInt(id);
     const existingRequest = RequestModel.findById(requestId);
 
     if (!existingRequest) {
@@ -31,7 +32,7 @@ export async function POST(
     }
 
     // Verificar que el usuario tiene la solicitud asignada (por rol o directo)
-    const hasAccess = 
+    const hasAccess =
       existingRequest.current_approver_role === user.role ||
       existingRequest.assigned_to_user_id === user.id;
 

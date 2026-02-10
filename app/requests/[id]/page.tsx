@@ -1,14 +1,11 @@
 'use client';
 
 import { redirect } from 'next/navigation';
-import { getServerUser } from '@/lib/server-auth';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { RequestActions } from '@/components/requests/RequestActions';
 import { ForwardRequestModal } from '@/components/requests/ForwardRequestModal';
-import { RequestModel } from '@/lib/models/request';
-import { AttachmentModel } from '@/lib/models/attachment';
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

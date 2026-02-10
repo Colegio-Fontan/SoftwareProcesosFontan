@@ -1,6 +1,8 @@
 import db from '../db';
 import type { Request, CreateRequestInput, RequestType, RequestStatus, UserRole } from '@/types';
 import { UserModel } from './user';
+import { sendProcessAssignmentNotification } from '../email';
+import { getUserById } from '../utils/get-users-by-role';
 
 export class RequestModel {
   static create(input: CreateRequestInput, userId: number): Request {
@@ -62,6 +64,11 @@ export class RequestModel {
       currentApproverRole,
       assignedToUserId
     );
+
+    // Enviar notificación por correo si hay un usuario asignado específico
+    if (assignedToUserId) {
+      this.sendAssignmentEmail(request, userId, assignedToUserId, false);
+    }
 
     return request;
   }
@@ -250,6 +257,62 @@ export class RequestModel {
     );
   }
 
+  /**
+   * Envía notificación por correo cuando se asigna un proceso a un usuario
+   */
+  private static async sendAssignmentEmail(
+    request: Request,
+    actionUserId: number,
+    targetUserId: number,
+    isForwarded: boolean
+  ) {
+    try {
+      // Obtener información del usuario asignado
+      const assignedUser = getUserById(targetUserId);
+      if (!assignedUser || !assignedUser.email) {
+        console.log(`⚠️ Usuario asignado ID ${targetUserId} no tiene email configurado`);
+        return;
+      }
+
+      // Obtener información del creador original del proceso
+      const creator = getUserById(request.user_id);
+      if (!creator) {
+        console.log(`⚠️ No se pudo obtener información del creador del proceso`);
+        return;
+      }
+
+      // Si es un reenvío, obtener información de quien reenvía
+      let forwarder = null;
+      if (isForwarded) {
+        forwarder = getUserById(actionUserId);
+      }
+
+      // Preparar datos del proceso
+      const processData = {
+        processId: request.id,
+        processType: request.type,
+        processTitle: request.title,
+        processDescription: request.description,
+        createdBy: {
+          name: creator.name,
+          email: creator.email,
+        },
+        urgency: request.urgency,
+        isForwarded,
+        forwardedBy: forwarder ? {
+          name: forwarder.name,
+          email: forwarder.email,
+        } : undefined,
+      };
+
+      // Enviar notificación
+      await sendProcessAssignmentNotification(assignedUser, processData);
+    } catch (error) {
+      // No bloquear la creación/reenvío si falla el email
+      console.error('❌ Error al enviar notificación por correo:', error);
+    }
+  }
+
   static getHistory(requestId: number) {
     // DIAGNÓSTICO DE BASE DE DATOS
     try {
@@ -316,6 +379,11 @@ export class RequestModel {
       newApproverRole,
       newAssignedUserId
     );
+
+    // Enviar notificación por correo si hay un usuario asignado específico
+    if (newAssignedUserId) {
+      this.sendAssignmentEmail(request, userId, newAssignedUserId, true);
+    }
 
     return this.findById(requestId)!;
   }

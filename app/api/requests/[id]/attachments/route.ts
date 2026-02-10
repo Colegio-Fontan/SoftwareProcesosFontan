@@ -8,14 +8,15 @@ import { randomUUID } from 'crypto';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = getAuthUser(request);
+  const { id } = await params;
+  const user = await getAuthUser(request);
   if (!user) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
 
-  const requestId = parseInt(params.id);
+  const requestId = parseInt(id);
   const existingRequest = RequestModel.findById(requestId);
 
   if (!existingRequest) {
