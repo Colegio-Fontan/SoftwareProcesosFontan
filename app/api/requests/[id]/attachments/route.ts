@@ -17,7 +17,7 @@ export async function POST(
   }
 
   const requestId = parseInt(id);
-  const existingRequest = RequestModel.findById(requestId);
+  const existingRequest = await RequestModel.findById(requestId);
 
   if (!existingRequest) {
     return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(
 
     await writeFile(filePath, buffer);
 
-    const attachment = AttachmentModel.create(
+    const attachment = await AttachmentModel.create(
       requestId,
       filename,
       file.name,

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const users = UserModel.getAll();
+    const users = await UserModel.getAll();
 
     // No devolver contraseñas
     const safeUsers = users.map(({ id, email, name, role, created_at }) => ({

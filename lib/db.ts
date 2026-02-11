@@ -1,28 +1,10 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { neon, neonConfig } from '@neondatabase/serverless';
 
-// Asegurar que el directorio de base de datos existe
-const dbDir = path.join(process.cwd(), 'database');
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+// Permite usar Neon en entornos locales y serverless
+if (!process.env.DATABASE_URL) {
+  console.warn('⚠️ DATABASE_URL no encontrada en el entorno');
 }
 
-const dbPath = path.join(dbDir, 'procesos.db');
-console.log('--- DATABASE INITIALIZATION ---');
-console.log('Target Path:', dbPath);
-console.log('Directory exists:', fs.existsSync(dbDir));
-console.log('File exists:', fs.existsSync(dbPath));
-console.log('-------------------------------');
+const sql = neon(process.env.DATABASE_URL || '');
 
-const db = new Database(dbPath);
-
-// Habilitar foreign keys
-db.pragma('foreign_keys = ON');
-
-// Optimizaciones
-db.pragma('journal_mode = WAL');
-db.pragma('synchronous = NORMAL');
-
-export default db;
-
+export default sql;

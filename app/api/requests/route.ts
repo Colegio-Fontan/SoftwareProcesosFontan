@@ -27,11 +27,11 @@ export async function GET(request: NextRequest) {
   let requests;
 
   if (filter === 'my') {
-    requests = RequestModel.findByUserId(user.id);
+    requests = await RequestModel.findByUserId(user.id);
   } else if (filter === 'pending') {
     // Combinar solicitudes por rol y asignadas directamente
-    const byRole = RequestModel.findByApproverRole(user.role);
-    const byUser = RequestModel.findByAssignedUser(user.id);
+    const byRole = await RequestModel.findByApproverRole(user.role);
+    const byUser = await RequestModel.findByAssignedUser(user.id);
 
     // Combinar y eliminar duplicados
     const combined = [...byRole, ...byUser];
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       return true;
     });
   } else {
-    requests = RequestModel.getAll();
+    requests = await RequestModel.getAll();
   }
 
   return NextResponse.json({ requests });
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const data = createRequestSchema.parse(body);
     console.log('Validated data:', data);
 
-    const newRequest = RequestModel.create({
+    const newRequest = await RequestModel.create({
       ...data,
       assigned_to_role: data.assigned_to_role as UserRole
     }, user.id);

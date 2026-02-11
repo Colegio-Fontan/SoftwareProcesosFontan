@@ -22,7 +22,7 @@ export async function POST(
 
   try {
     const requestId = parseInt(id);
-    const existingRequest = RequestModel.findById(requestId);
+    const existingRequest = await RequestModel.findById(requestId);
 
     if (!existingRequest) {
       return NextResponse.json(
@@ -55,7 +55,7 @@ export async function POST(
     }
 
     // Reenviar la solicitud
-    const updatedRequest = RequestModel.forwardRequest(
+    const updatedRequest = await RequestModel.forwardRequest(
       requestId,
       user.id,
       data.comment,
@@ -78,5 +78,7 @@ export async function POST(
     );
   }
 }
+
+
 
 

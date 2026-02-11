@@ -1,11 +1,11 @@
-import db from '../db';
+import sql from '../db';
 import type { Request, CreateRequestInput, RequestType, RequestStatus, UserRole } from '@/types';
 import { UserModel } from './user';
 import { sendProcessAssignmentNotification } from '../email';
 import { getUserById } from '../utils/get-users-by-role';
 
 export class RequestModel {
-  static create(input: CreateRequestInput, userId: number): Request {
+  static async create(input: CreateRequestInput, userId: number): Promise<Request> {
     const {
       type,
       title,
@@ -14,14 +14,12 @@ export class RequestModel {
       urgency = 'medio',
       assigned_to_user_id,
       assigned_to_role,
-      // custom_flow = false // Quitar si no se usa de input
     } = input;
 
     let currentApproverRole: UserRole | null = null;
     let assignedToUserId: number | null = null;
     let isCustomFlow = false;
 
-    // Si se especificó un usuario o rol personalizado
     if (assigned_to_user_id) {
       assignedToUserId = assigned_to_user_id;
       isCustomFlow = true;
@@ -29,84 +27,76 @@ export class RequestModel {
       currentApproverRole = assigned_to_role;
       isCustomFlow = true;
     } else {
-      // Flujo automático estándar
       currentApproverRole = this.getInitialApproverRole(type);
     }
 
-    const result = db.prepare(`
+    const rows = await sql`
       INSERT INTO requests (type, title, description, reason, urgency, user_id, current_approver_role, assigned_to_user_id, custom_flow)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      type,
-      title,
-      description,
-      reason || null,
-      urgency,
-      userId,
-      currentApproverRole,
-      assignedToUserId,
-      isCustomFlow ? 1 : 0
-    );
+      VALUES (${type}, ${title}, ${description}, ${reason || null}, ${urgency}, ${userId}, ${currentApproverRole}, ${assignedToUserId}, ${isCustomFlow})
+      RETURNING *
+    `;
 
-    const request = this.findById(result.lastInsertRowid as number)!;
+    const request = await this.findById(rows[0].id)!;
 
-    // Crear entrada en historial
     const historyComment = isCustomFlow
       ? 'Solicitud creada con flujo personalizado'
       : 'Solicitud creada';
-    this.addHistory(
-      request.id,
+
+    await this.addHistory(
+      request!.id,
       userId,
       'creado',
       historyComment,
       undefined,
       undefined,
-      currentApproverRole,
-      assignedToUserId
+      currentApproverRole as string | undefined,
+      assignedToUserId as number | undefined
     );
 
-    // Enviar notificación por correo si hay un usuario asignado específico
     if (assignedToUserId) {
-      this.sendAssignmentEmail(request, userId, assignedToUserId, false);
+      this.sendAssignmentEmail(request!, userId, assignedToUserId, false);
     }
 
-    return request;
+    return request!;
   }
 
-  static findById(id: number): Request | undefined {
-    const request = db.prepare('SELECT * FROM requests WHERE id = ?').get(id) as Request | undefined;
-    if (!request) return undefined;
+  static async findById(id: number): Promise<Request | undefined> {
+    const rows = await sql`SELECT * FROM requests WHERE id = ${id}`;
+    if (rows.length === 0) return undefined;
+    const request = rows[0] as Request;
 
-    const user = UserModel.findById(request.user_id);
+    const user = await UserModel.findById(request.user_id);
     const assigned_to = request.assigned_to_user_id
-      ? UserModel.findById(request.assigned_to_user_id)
+      ? await UserModel.findById(request.assigned_to_user_id)
       : undefined;
 
     return { ...request, user, assigned_to };
   }
 
-  static findByUserId(userId: number): Request[] {
-    const requests = db.prepare(`
+  static async findByUserId(userId: number): Promise<Request[]> {
+    const requests = await sql`
       SELECT r.*, 
              (SELECT comment FROM approval_history WHERE request_id = r.id AND comment IS NOT NULL ORDER BY created_at DESC LIMIT 1) as last_comment
       FROM requests r
-      WHERE r.user_id = ? 
+      WHERE r.user_id = ${userId} 
       ORDER BY r.created_at DESC
-    `).all(userId) as (Request & { last_comment: string | null })[];
+    ` as (Request & { last_comment: string | null })[];
 
-    return requests.map(req => {
-      const user = UserModel.findById(req.user_id);
+    const results = await Promise.all(requests.map(async req => {
+      const user = await UserModel.findById(req.user_id);
       const assigned_to = req.assigned_to_user_id
-        ? UserModel.findById(req.assigned_to_user_id)
+        ? await UserModel.findById(req.assigned_to_user_id)
         : undefined;
       return { ...req, user, assigned_to };
-    });
+    }));
+
+    return results as Request[];
   }
 
-  static findByApproverRole(role: UserRole): Request[] {
-    const requests = db.prepare(`
+  static async findByApproverRole(role: UserRole): Promise<Request[]> {
+    const requests = await sql`
       SELECT * FROM requests 
-      WHERE current_approver_role = ? 
+      WHERE current_approver_role = ${role} 
       AND status IN ('pendiente', 'en_proceso')
       ORDER BY 
         CASE urgency
@@ -115,21 +105,23 @@ export class RequestModel {
           WHEN 'bajo' THEN 3
         END,
         created_at ASC
-    `).all(role) as Request[];
+    ` as Request[];
 
-    return requests.map(req => {
-      const user = UserModel.findById(req.user_id);
+    const results = await Promise.all(requests.map(async req => {
+      const user = await UserModel.findById(req.user_id);
       const assigned_to = req.assigned_to_user_id
-        ? UserModel.findById(req.assigned_to_user_id)
+        ? await UserModel.findById(req.assigned_to_user_id)
         : undefined;
       return { ...req, user, assigned_to };
-    });
+    }));
+
+    return results as Request[];
   }
 
-  static findByAssignedUser(userId: number): Request[] {
-    const requests = db.prepare(`
+  static async findByAssignedUser(userId: number): Promise<Request[]> {
+    const requests = await sql`
       SELECT * FROM requests 
-      WHERE assigned_to_user_id = ? 
+      WHERE assigned_to_user_id = ${userId} 
       AND status IN ('pendiente', 'en_proceso')
       ORDER BY 
         CASE urgency
@@ -138,102 +130,93 @@ export class RequestModel {
           WHEN 'bajo' THEN 3
         END,
         created_at ASC
-    `).all(userId) as Request[];
+    ` as Request[];
 
-    return requests.map(req => {
-      const user = UserModel.findById(req.user_id);
-      const assigned_to = UserModel.findById(userId);
+    const results = await Promise.all(requests.map(async req => {
+      const user = await UserModel.findById(req.user_id);
+      const assigned_to = await UserModel.findById(userId);
       return { ...req, user, assigned_to };
-    });
+    }));
+
+    return results as Request[];
   }
 
-  static getAll(): Request[] {
-    const requests = db.prepare(`
+  static async getAll(): Promise<Request[]> {
+    const requests = await sql`
       SELECT * FROM requests 
       ORDER BY created_at DESC
-    `).all() as Request[];
+    ` as Request[];
 
-    return requests.map(req => {
-      const user = UserModel.findById(req.user_id);
+    const results = await Promise.all(requests.map(async req => {
+      const user = await UserModel.findById(req.user_id);
       return { ...req, user };
-    });
+    }));
+
+    return results as Request[];
   }
 
-  static updateStatus(
+  static async updateStatus(
     id: number,
     status: RequestStatus,
     userId: number,
     comment?: string
-  ): Request {
-    const request = this.findById(id);
+  ): Promise<Request> {
+    const request = await this.findById(id);
     if (!request) throw new Error('Solicitud no encontrada');
 
     const previousStatus = request.status;
     let newApproverRole: UserRole | null = request.current_approver_role || null;
     let newStatus = status;
 
-    // Si se aprueba, ya no escalamos automáticamente.
-    // El aprobador debe usar "Reenviar" si quiere que siga el flujo.
     if (status === 'aceptado') {
       newApproverRole = null;
       newStatus = 'aceptado';
     }
 
-    // Si se resuelve o cierra, ya no hay aprobador pendiente
     if (status === 'resuelto' || status === 'cerrado' || status === 'rechazado') {
       newApproverRole = null;
     }
 
-    db.prepare(`
+    await sql`
       UPDATE requests 
-      SET status = ?, current_approver_role = ?, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(newStatus, newApproverRole, id);
+      SET status = ${newStatus}, current_approver_role = ${newApproverRole}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+    `;
 
-    // Agregar al historial
     const action = status === 'aceptado' ? 'aprobado' : status === 'rechazado' ? 'rechazado' : 'enviado';
-    this.addHistory(id, userId, action, comment, previousStatus, newStatus, newApproverRole);
+    await this.addHistory(id, userId, action, comment, previousStatus, newStatus, newApproverRole as string | null);
 
-    return this.findById(id)!;
+    return (await this.findById(id))!;
   }
 
   static getInitialApproverRole(type: RequestType): UserRole | null {
     switch (type) {
-      case 'compra':
-        return 'cartera';
+      case 'compra': return 'cartera';
       case 'permiso':
-      case 'certificado':
-        return 'gestion_humana';
-      case 'soporte':
-        return 'sistemas';
-      case 'mantenimiento':
-        return 'servicios_generales';
-      case 'personalizada':
-        return 'gerencia'; // Las solicitudes personalizadas van a gerencia para asignar
-      default:
-        return null;
+      case 'certificado': return 'gestion_humana';
+      case 'soporte': return 'sistemas';
+      case 'mantenimiento': return 'servicios_generales';
+      case 'personalizada': return 'gerencia';
+      default: return null;
     }
   }
 
   static getNextApproverRole(currentRole: UserRole | null, type: RequestType): UserRole | null {
     if (!currentRole) return null;
-
-    const approvalFlow: Record<UserRole, UserRole | null> = {
+    const approvalFlow: Record<string, string | null> = {
       cartera: 'gerencia',
       sistemas: 'gerencia',
       gestion_humana: 'gerencia',
       servicios_generales: 'gerencia',
-      // Solo las solicitudes de compra escalan de gerencia a rectoría
       gerencia: type === 'compra' ? 'rectoria' : null,
-      rectoria: null, // Fin del flujo
+      rectoria: null,
       empleado: null,
       admin: null,
     };
-
-    return approvalFlow[currentRole] || null;
+    return (approvalFlow[currentRole] as UserRole) || null;
   }
 
-  static addHistory(
+  static async addHistory(
     requestId: number,
     userId: number,
     action: 'creado' | 'enviado' | 'aprobado' | 'rechazado' | 'comentado',
@@ -242,24 +225,21 @@ export class RequestModel {
     newStatus?: string,
     forwardedToRole?: string | null,
     forwardedToUserId?: number | null
-  ): void {
-    db.prepare(`
+  ): Promise<void> {
+    await sql`
       INSERT INTO approval_history (
         request_id, user_id, action, comment, 
         previous_status, new_status, 
         forwarded_to_role, forwarded_to_user_id
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      requestId, userId, action, comment || null,
-      previousStatus || null, newStatus || null,
-      forwardedToRole || null, forwardedToUserId || null
-    );
+      VALUES (
+        ${requestId}, ${userId}, ${action}, ${comment || null},
+        ${previousStatus || null}, ${newStatus || null},
+        ${forwardedToRole || null}, ${forwardedToUserId || null}
+      )
+    `;
   }
 
-  /**
-   * Envía notificación por correo cuando se asigna un proceso a un usuario
-   */
   private static async sendAssignmentEmail(
     request: Request,
     actionUserId: number,
@@ -267,88 +247,57 @@ export class RequestModel {
     isForwarded: boolean
   ) {
     try {
-      // Obtener información del usuario asignado
-      const assignedUser = getUserById(targetUserId);
-      if (!assignedUser || !assignedUser.email) {
-        console.log(`⚠️ Usuario asignado ID ${targetUserId} no tiene email configurado`);
-        return;
-      }
+      const assignedUser = await getUserById(targetUserId);
+      if (!assignedUser || !assignedUser.email) return;
 
-      // Obtener información del creador original del proceso
-      const creator = getUserById(request.user_id);
-      if (!creator) {
-        console.log(`⚠️ No se pudo obtener información del creador del proceso`);
-        return;
-      }
+      const creator = await getUserById(request.user_id);
+      if (!creator) return;
 
-      // Si es un reenvío, obtener información de quien reenvía
       let forwarder = null;
       if (isForwarded) {
-        forwarder = getUserById(actionUserId);
+        forwarder = await getUserById(actionUserId);
       }
 
-      // Preparar datos del proceso
       const processData = {
         processId: request.id,
         processType: request.type,
         processTitle: request.title,
         processDescription: request.description,
-        createdBy: {
-          name: creator.name,
-          email: creator.email,
-        },
+        createdBy: { name: creator.name, email: creator.email },
         urgency: request.urgency,
         isForwarded,
-        forwardedBy: forwarder ? {
-          name: forwarder.name,
-          email: forwarder.email,
-        } : undefined,
+        forwardedBy: forwarder ? { name: forwarder.name, email: forwarder.email } : undefined,
       };
 
-      // Enviar notificación
       await sendProcessAssignmentNotification(assignedUser, processData);
     } catch (error) {
-      // No bloquear la creación/reenvío si falla el email
       console.error('❌ Error al enviar notificación por correo:', error);
     }
   }
 
-  static getHistory(requestId: number) {
-    // DIAGNÓSTICO DE BASE DE DATOS
-    try {
-      const cols = (db.prepare("PRAGMA table_info(approval_history)").all() as any[]).map(c => c.name);
-      console.log('--- DB DIAGNOSTIC (approval_history) ---');
-      console.log('Detected Columns:', cols);
-      console.log('----------------------------------------');
-    } catch (e) {
-      console.error('Diagnostic failed:', e);
-    }
-
-    const history = db.prepare(`
+  static async getHistory(requestId: number) {
+    return await sql`
       SELECT ah.*, 
              u.name as user_name, u.role as user_role,
              f.name as forwarded_to_user_name
       FROM approval_history ah
       JOIN users u ON ah.user_id = u.id
       LEFT JOIN users f ON ah.forwarded_to_user_id = f.id
-      WHERE ah.request_id = ?
+      WHERE ah.request_id = ${requestId}
       ORDER BY ah.created_at ASC
-    `).all(requestId);
-
-    return history;
+    `;
   }
 
-  static forwardRequest(
+  static async forwardRequest(
     requestId: number,
     userId: number,
     comment: string,
     forwardToUserId: number | null,
     forwardToRole: string | null
-  ): Request {
-    const request = this.findById(requestId);
+  ): Promise<Request> {
+    const request = await this.findById(requestId);
     if (!request) throw new Error('Solicitud no encontrada');
 
-    // Actualizar el destinatario
     let newApproverRole: string | null = null;
     let newAssignedUserId: number | null = null;
 
@@ -358,18 +307,17 @@ export class RequestModel {
       newApproverRole = forwardToRole;
     }
 
-    db.prepare(`
+    await sql`
       UPDATE requests 
-      SET current_approver_role = ?, 
-          assigned_to_user_id = ?,
-          custom_flow = 1,
+      SET current_approver_role = ${newApproverRole}, 
+          assigned_to_user_id = ${newAssignedUserId},
+          custom_flow = true,
           status = 'pendiente',
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(newApproverRole, newAssignedUserId, requestId);
+      WHERE id = ${requestId}
+    `;
 
-    // Agregar al historial como "reenviado"
-    this.addHistory(
+    await this.addHistory(
       requestId,
       userId,
       'comentado',
@@ -380,12 +328,10 @@ export class RequestModel {
       newAssignedUserId
     );
 
-    // Enviar notificación por correo si hay un usuario asignado específico
     if (newAssignedUserId) {
       this.sendAssignmentEmail(request, userId, newAssignedUserId, true);
     }
 
-    return this.findById(requestId)!;
+    return (await this.findById(requestId))!;
   }
 }
-

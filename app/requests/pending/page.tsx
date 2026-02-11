@@ -16,7 +16,7 @@ export default async function PendingRequestsPage() {
     redirect('/');
   }
 
-  const requests = RequestModel.findByApproverRole(user.role);
+  const requests = await RequestModel.findByApproverRole(user.role);
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = loginSchema.parse(body);
 
-    const user = UserModel.findByEmail(email);
+    const user = await UserModel.findByEmail(email);
     if (!user) {
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       if (UserModel.isValidSchoolEmail(email)) {
         // Si es del dominio pero no está confirmado, permitiremos el login y lo confirmaremos
         // Esto soluciona el bloqueo de usuarios existentes
-        UserModel.confirmUser(user.id);
+        await UserModel.confirmUser(user.id);
         console.log('Auto-confirming existing school user:', email);
       } else {
         return NextResponse.json(

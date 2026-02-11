@@ -25,7 +25,7 @@ export async function getAuthUser(request: NextRequest): Promise<User | null> {
   const payload = await verifyToken(token);
   if (!payload) return null;
 
-  const user = UserModel.findById(payload.userId);
+  const user = await UserModel.findById(payload.userId);
   return user || null;
 }
 

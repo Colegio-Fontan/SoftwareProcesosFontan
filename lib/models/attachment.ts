@@ -1,53 +1,64 @@
-import db from '../db';
+import sql from '../db';
 import type { Attachment } from '@/types';
 import fs from 'fs';
 import path from 'path';
 
 export class AttachmentModel {
-  static create(
+  static async create(
     requestId: number,
     filename: string,
     originalFilename: string,
     mimeType: string,
     size: number,
     filePath: string
-  ): Attachment {
-    const result = db.prepare(`
+  ): Promise<Attachment> {
+    const rows = await sql`
       INSERT INTO attachments (request_id, filename, original_filename, mime_type, size, path)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(requestId, filename, originalFilename, mimeType, size, filePath);
+      VALUES (${requestId}, ${filename}, ${originalFilename}, ${mimeType}, ${size}, ${filePath})
+      RETURNING *
+    `;
 
-    return db.prepare('SELECT * FROM attachments WHERE id = ?').get(result.lastInsertRowid) as Attachment;
+    return rows[0] as Attachment;
   }
 
-  static findByRequestId(requestId: number): Attachment[] {
-    return db.prepare('SELECT * FROM attachments WHERE request_id = ?').all(requestId) as Attachment[];
+  static async findByRequestId(requestId: number): Promise<Attachment[]> {
+    const rows = await sql`SELECT * FROM attachments WHERE request_id = ${requestId}`;
+    return rows as Attachment[];
   }
 
-  static findById(id: number): Attachment | undefined {
-    return db.prepare('SELECT * FROM attachments WHERE id = ?').get(id) as Attachment | undefined;
+  static async findById(id: number): Promise<Attachment | undefined> {
+    const rows = await sql`SELECT * FROM attachments WHERE id = ${id}`;
+    return rows[0] as Attachment | undefined;
   }
 
-  static delete(id: number): void {
-    const attachment = this.findById(id);
+  static async delete(id: number): Promise<void> {
+    const attachment = await this.findById(id);
     if (!attachment) return;
 
-    // Eliminar archivo físico
+    // Eliminar archivo físico (Nota: Esto fallará en Vercel, debería usar Blob storage)
     const filePath = path.join(process.cwd(), attachment.path);
     if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      try {
+        fs.unlinkSync(filePath);
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
     }
 
     // Eliminar registro de BD
-    db.prepare('DELETE FROM attachments WHERE id = ?').run(id);
+    await sql`DELETE FROM attachments WHERE id = ${id}`;
   }
 
   static getStoragePath(): string {
     const storageDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(storageDir)) {
-      fs.mkdirSync(storageDir, { recursive: true });
+    // En Vercel no se puede crear carpetas arbitrarias, pero lo dejamos para local
+    if (!fs.existsSync(storageDir) && process.env.NODE_ENV !== 'production') {
+      try {
+        fs.mkdirSync(storageDir, { recursive: true });
+      } catch (err) {
+        console.error('Error creating storage dir:', err);
+      }
     }
     return storageDir;
   }
 }
-

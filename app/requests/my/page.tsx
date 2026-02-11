@@ -13,7 +13,7 @@ export default async function MyRequestsPage() {
     redirect('/login');
   }
 
-  const requests = RequestModel.findByUserId(user.id);
+  const requests = await RequestModel.findByUserId(user.id);
 
   const activeRequests = requests.filter(r => r.status === 'pendiente' || r.status === 'en_proceso');
   const finalizedRequests = requests.filter(r => r.status === 'aceptado' || r.status === 'rechazado' || r.status === 'resuelto' || r.status === 'cerrado');

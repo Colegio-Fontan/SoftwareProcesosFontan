@@ -1,0 +1,12 @@
+const Database = require('better-sqlite3');
+const path = require('path');
+
+const dbPath = path.join(__dirname, '../database.sqlite');
+try {
+  const db = new Database(dbPath);
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+  console.log('Tables found:', tables.map(t => t.name));
+  db.close();
+} catch (err) {
+  console.error('Error opening database:', err);
+}

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Verificar si el usuario ya existe
-    const existingUser = UserModel.findByEmail(validatedData.email);
+    const existingUser = await UserModel.findByEmail(validatedData.email);
     if (existingUser) {
       return NextResponse.json(
         { error: 'El usuario ya está registrado' },

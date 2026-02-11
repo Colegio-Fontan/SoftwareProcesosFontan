@@ -12,7 +12,7 @@ export async function getServerUser(): Promise<User | null> {
   const payload = await verifyToken(token);
   if (!payload) return null;
 
-  const user = UserModel.findById(payload.userId);
+  const user = await UserModel.findById(payload.userId);
   console.log('getServerUser - User found:', !!user);
   return user || null;
 }

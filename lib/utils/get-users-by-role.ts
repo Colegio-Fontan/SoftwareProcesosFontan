@@ -1,19 +1,19 @@
-import db from '../db';
+import sql from '../db';
 import type { User, UserRole } from '@/types';
 
 /**
  * Obtiene todos los usuarios que tienen un rol específico
  */
-export function getUsersByRole(role: UserRole): User[] {
+export async function getUsersByRole(role: UserRole): Promise<User[]> {
   try {
-    const users = db.prepare(`
-      SELECT id, name, email, role, department, is_confirmed, created_at
+    const rows = await sql`
+      SELECT id, name, email, role, is_confirmed, created_at
       FROM users
-      WHERE role = ? AND is_confirmed = 1
+      WHERE role = ${role} AND is_confirmed = true
       ORDER BY name ASC
-    `).all(role) as User[];
+    `;
 
-    return users;
+    return rows as User[];
   } catch (error) {
     console.error('Error al obtener usuarios por rol:', error);
     return [];
@@ -23,15 +23,15 @@ export function getUsersByRole(role: UserRole): User[] {
 /**
  * Obtiene un usuario por su ID
  */
-export function getUserById(userId: number): User | null {
+export async function getUserById(userId: number): Promise<User | null> {
   try {
-    const user = db.prepare(`
-      SELECT id, name, email, role, department, is_confirmed, created_at
+    const rows = await sql`
+      SELECT id, name, email, role, is_confirmed, created_at
       FROM users
-      WHERE id = ?
-    `).get(userId) as User | undefined;
+      WHERE id = ${userId}
+    `;
 
-    return user || null;
+    return (rows[0] as User) || null;
   } catch (error) {
     console.error('Error al obtener usuario por ID:', error);
     return null;

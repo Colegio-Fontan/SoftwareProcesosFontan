@@ -20,7 +20,7 @@ export async function GET(
 
   const { id } = await params;
   const requestId = parseInt(id);
-  const requestData = RequestModel.findById(requestId);
+  const requestData = await RequestModel.findById(requestId);
 
   if (!requestData) {
     return NextResponse.json(
@@ -30,8 +30,8 @@ export async function GET(
   }
 
   // Obtener adjuntos e historial
-  const attachments = AttachmentModel.findByRequestId(requestId);
-  const history = RequestModel.getHistory(requestId);
+  const attachments = await AttachmentModel.findByRequestId(requestId);
+  const history = await RequestModel.getHistory(requestId);
 
   return NextResponse.json({
     request: {
@@ -68,7 +68,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const requestId = parseInt(id);
-    const existingRequest = RequestModel.findById(requestId);
+    const existingRequest = await RequestModel.findById(requestId);
 
     if (!existingRequest) {
       return NextResponse.json(
@@ -89,7 +89,7 @@ export async function PATCH(
     const data = updateRequestSchema.parse(body);
 
     if (data.status) {
-      const updatedRequest = RequestModel.updateStatus(
+      const updatedRequest = await RequestModel.updateStatus(
         requestId,
         data.status,
         user.id,

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = UserModel.findByConfirmationToken(token);
+    const user = await UserModel.findByConfirmationToken(token);
 
     if (!user) {
       return NextResponse.json(
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    UserModel.confirmUser(user.id);
+    await UserModel.confirmUser(user.id);
 
     return NextResponse.json(
       { message: 'Correo confirmado exitosamente. Ya puedes iniciar sesión.' },
