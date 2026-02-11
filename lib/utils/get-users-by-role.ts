@@ -38,7 +38,9 @@ export function getUserById(userId: number): User | null {
   }
 }
 
-export default {
+const usersUtils = {
   getUsersByRole,
   getUserById,
 };
+
+export default usersUtils;

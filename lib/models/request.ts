@@ -14,7 +14,7 @@ export class RequestModel {
       urgency = 'medio',
       assigned_to_user_id,
       assigned_to_role,
-      custom_flow = false
+      // custom_flow = false // Quitar si no se usa de input
     } = input;
 
     let currentApproverRole: UserRole | null = null;
@@ -92,7 +92,7 @@ export class RequestModel {
       FROM requests r
       WHERE r.user_id = ? 
       ORDER BY r.created_at DESC
-    `).all(userId) as any[];
+    `).all(userId) as (Request & { last_comment: string | null })[];
 
     return requests.map(req => {
       const user = UserModel.findById(req.user_id);
@@ -316,7 +316,7 @@ export class RequestModel {
   static getHistory(requestId: number) {
     // DIAGNÓSTICO DE BASE DE DATOS
     try {
-      const cols = db.prepare("PRAGMA table_info(approval_history)").all().map((c: any) => c.name);
+      const cols = (db.prepare("PRAGMA table_info(approval_history)").all() as any[]).map(c => c.name);
       console.log('--- DB DIAGNOSTIC (approval_history) ---');
       console.log('Detected Columns:', cols);
       console.log('----------------------------------------');

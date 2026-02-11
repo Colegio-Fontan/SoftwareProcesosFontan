@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       router.push('/home');
       router.refresh();
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       router.push('/home');
       router.refresh();
-    } catch (err) {
+    } catch {
       setError('Error de conexión.');
       setIsLoading(false);
     }

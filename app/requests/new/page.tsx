@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RequestForm } from '@/components/requests/RequestForm';
 import { Card } from '@/components/ui/Card';
-import type { RequestType } from '@/types';
+import type { RequestType, CreateRequestInput, UserRole } from '@/types';
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -25,12 +25,12 @@ export default function NewRequestPage() {
     setError('');
 
     try {
-      const data: any = {
-        type: formData.get('type'),
-        title: formData.get('title'),
-        description: formData.get('description'),
-        reason: formData.get('reason') || undefined,
-        urgency: formData.get('urgency'),
+      const data: CreateRequestInput = {
+        type: type,
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        reason: (formData.get('reason') as string) || undefined,
+        urgency: (formData.get('urgency') as 'bajo' | 'medio' | 'alto') || 'bajo',
       };
 
       // Agregar destinatario si está especificado
@@ -38,7 +38,7 @@ export default function NewRequestPage() {
         data.assigned_to_user_id = parseInt(formData.get('assigned_to_user_id') as string);
         data.custom_flow = formData.get('custom_flow') === 'true';
       } else if (formData.get('assigned_to_role')) {
-        data.assigned_to_role = formData.get('assigned_to_role');
+        data.assigned_to_role = formData.get('assigned_to_role') as UserRole;
         data.custom_flow = formData.get('custom_flow') === 'true';
       }
 
@@ -56,7 +56,7 @@ export default function NewRequestPage() {
       }
 
       router.push(`/requests/${result.request.id}`);
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);

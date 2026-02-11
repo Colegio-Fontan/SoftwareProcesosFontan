@@ -65,7 +65,7 @@ export async function POST(
     );
 
     return NextResponse.json({ attachment }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al subir archivo' },
       { status: 500 }

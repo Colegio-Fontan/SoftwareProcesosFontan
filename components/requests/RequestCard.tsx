@@ -97,7 +97,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
           </p>
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${request.status === 'aceptado' ? 'text-green-600' :
-                request.status === 'rechazado' ? 'text-red-600' : 'text-primary'
+              request.status === 'rechazado' ? 'text-red-600' : 'text-primary'
               }`}>
               {request.status === 'aceptado' ? '✅ Aceptado' :
                 request.status === 'rechazado' ? '❌ Rechazado' :
@@ -114,7 +114,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
           {(request.status === 'aceptado' || request.status === 'rechazado' || request.status === 'resuelto') && request.last_comment && (
             <div className="mt-2 text-xs text-gray-600 italic border-t border-gray-200 pt-2">
               <span className="font-bold not-italic">Por qué: </span>
-              "{request.last_comment}"
+              &quot;{request.last_comment}&quot;
             </div>
           )}
         </div>

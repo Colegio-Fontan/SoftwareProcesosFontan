@@ -97,9 +97,9 @@ function generateEmailHTML(
   const urgencyColor = urgencyColors[processData.urgency.toLowerCase()] || '#6b7280';
 
   const actionText = processData.isForwarded ? 'reenviado' : 'asignado';
-  const actionBy = processData.isForwarded && processData.forwardedBy
-    ? processData.forwardedBy.name
-    : processData.createdBy.name;
+  // const actionBy = processData.isForwarded && processData.forwardedBy
+  //   ? processData.forwardedBy.name
+  //   : processData.createdBy.name;
 
   return `
 <!DOCTYPE html>
@@ -227,6 +227,8 @@ function generateEmailHTML(
   `.trim();
 }
 
-export default {
+const emailService = {
   sendProcessAssignmentNotification,
 };
+
+export default emailService;

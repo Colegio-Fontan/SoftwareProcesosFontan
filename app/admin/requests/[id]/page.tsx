@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import type { Request } from '@/types';
+import type { Request, ApprovalHistory } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
@@ -28,8 +28,8 @@ export default function AdminRequestDetailPage({
         } else {
           router.replace('/admin/requests');
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // console.error(err);
       } finally {
         setLoading(false);
       }
@@ -57,7 +57,7 @@ export default function AdminRequestDetailPage({
             <div className="border-t pt-4">
               <h3 className="font-bold mb-4">Historial de Eventos</h3>
               <div className="space-y-4">
-                {request.history.map((h: any) => (
+                {request.history.map((h: ApprovalHistory) => (
                   <div key={h.id} className="border-l-4 border-primary pl-4 py-2">
                     <div className="flex justify-between text-sm">
                       <span className="font-bold">{h.user_name} ({h.user_role})</span>

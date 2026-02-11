@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { RequestModel } from '@/lib/models/request';
 import { z } from 'zod';
+import type { UserRole } from '@/types';
 
 const createRequestSchema = z.object({
   type: z.enum(['compra', 'permiso', 'soporte', 'certificado', 'mantenimiento', 'personalizada']),
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     // Combinar solicitudes por rol y asignadas directamente
     const byRole = RequestModel.findByApproverRole(user.role);
     const byUser = RequestModel.findByAssignedUser(user.id);
-    
+
     // Combinar y eliminar duplicados
     const combined = [...byRole, ...byUser];
     const uniqueIds = new Set();
@@ -59,7 +60,10 @@ export async function POST(request: NextRequest) {
     const data = createRequestSchema.parse(body);
     console.log('Validated data:', data);
 
-    const newRequest = RequestModel.create(data, user.id);
+    const newRequest = RequestModel.create({
+      ...data,
+      assigned_to_role: data.assigned_to_role as UserRole
+    }, user.id);
     console.log('Request created:', newRequest);
 
     return NextResponse.json({ request: newRequest }, { status: 201 });

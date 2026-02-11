@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 function ConfirmContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  // const router = useRouter();
   const token = searchParams.get('token');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('Verificando tu cuenta...');
@@ -32,7 +32,7 @@ function ConfirmContent() {
           setStatus('error');
           setMessage(data.error || 'Error al confirmar el correo.');
         }
-      } catch (err) {
+      } catch {
         setStatus('error');
         setMessage('Error de conexión. Intenta nuevamente.');
       }

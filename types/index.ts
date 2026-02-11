@@ -71,6 +71,8 @@ export interface ApprovalHistory {
   forwarded_to_user_name?: string | null;
   created_at: string;
   user?: User;
+  user_name?: string;
+  user_role?: string;
 }
 
 export interface CreateRequestInput {

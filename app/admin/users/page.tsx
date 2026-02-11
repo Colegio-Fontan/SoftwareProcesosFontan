@@ -26,8 +26,8 @@ export default function AdminUsersPage() {
         const data = await res.json();
         setUsers(data.users);
       }
-    } catch (err) {
-      console.error('Error fetching users:', err);
+    } catch {
+      console.error('Error fetching users');
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +58,7 @@ export default function AdminUsersPage() {
       setShowForm(false);
       setFormData({ name: '', email: '', password: '', role: 'empleado' });
       fetchUsers();
-    } catch (err) {
+    } catch {
       setError('Error de conexión');
     }
   };

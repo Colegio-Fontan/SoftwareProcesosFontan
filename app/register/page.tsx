@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import Link from 'next/link';
 
 export default function RegisterPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,7 +47,7 @@ export default function RegisterPage() {
 
       setSuccess('Usuario registrado con éxito. Revisa tu correo escolar para confirmar tu cuenta.');
       setFormData({ name: '', email: '', password: '', role: 'empleado' });
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);

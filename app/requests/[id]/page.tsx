@@ -9,7 +9,8 @@ import { ForwardRequestModal } from '@/components/requests/ForwardRequestModal';
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Request, User } from '@/types';
+import Link from 'next/link';
+import type { Request, User, ApprovalHistory } from '@/types';
 
 const typeLabels: Record<string, string> = {
   compra: 'Compra/Materiales',
@@ -147,9 +148,9 @@ export default function RequestDetailPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <a href="/requests/my" className="text-primary hover:underline mb-4 inline-block">
+        <Link href="/requests/my" className="text-primary hover:underline mb-4 inline-block">
           ← Volver a mis solicitudes
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -231,7 +232,7 @@ export default function RequestDetailPage({
             <Card>
               <h2 className="text-xl font-semibold mb-4">Historial</h2>
               <div className="space-y-3">
-                {request.history.map((item: any) => (
+                {request.history.map((item: ApprovalHistory) => (
                   <div key={item.id} className="border-l-2 border-primary pl-4 py-2">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium">{item.user_name}</span>

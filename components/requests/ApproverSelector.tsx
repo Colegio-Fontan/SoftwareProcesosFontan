@@ -84,39 +84,36 @@ export const ApproverSelector: React.FC<ApproverSelectorProps> = ({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           ¿A quién deseas enviar esta solicitud?
         </label>
-        
+
         {/* Modo de selección */}
         <div className="flex gap-2 mb-3">
           <button
             type="button"
             onClick={() => handleModeChange('default')}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              selectionMode === 'default'
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${selectionMode === 'default'
                 ? 'bg-primary text-white border-primary'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
-            }`}
+              }`}
           >
             Flujo Automático
           </button>
           <button
             type="button"
             onClick={() => handleModeChange('role')}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              selectionMode === 'role'
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${selectionMode === 'role'
                 ? 'bg-primary text-white border-primary'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
-            }`}
+              }`}
           >
             Por Rol
           </button>
           <button
             type="button"
             onClick={() => handleModeChange('user')}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
-              selectionMode === 'user'
+            className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${selectionMode === 'user'
                 ? 'bg-primary text-white border-primary'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-primary'
-            }`}
+              }`}
           >
             Persona Específica
           </button>
@@ -143,15 +140,15 @@ export const ApproverSelector: React.FC<ApproverSelectorProps> = ({
                   .filter(([role]) => role !== 'empleado')
                   .map(([role, label]) => ({
                     value: role,
-                    label: recommended.includes(role as UserRole) 
-                      ? `⭐ ${label} (Recomendado)` 
+                    label: recommended.includes(role as UserRole)
+                      ? `⭐ ${label} (Recomendado)`
                       : label,
                   })),
               ]}
             />
             {recommended.length > 0 && (
               <p className="text-xs text-gray-600 mt-2">
-                💡 Recomendados para "{requestType}": {recommended.map(r => roleLabels[r]).join(', ')}
+                💡 Recomendados para &quot;{requestType}&quot;: {recommended.map(r => roleLabels[r]).join(', ')}
               </p>
             )}
           </div>

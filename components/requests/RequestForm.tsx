@@ -48,7 +48,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     data.append('description', formData.description);
     if (formData.reason) data.append('reason', formData.reason);
     data.append('urgency', formData.urgency);
-    
+
     // Agregar información del destinatario
     if (approverSelection.type === 'user' && approverSelection.value) {
       data.append('assigned_to_user_id', String(approverSelection.value));
@@ -57,7 +57,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
       data.append('assigned_to_role', String(approverSelection.value));
       data.append('custom_flow', 'true');
     }
-    
+
     await onSubmit(data);
   };
 
@@ -100,7 +100,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         />
       )}
 
-      {(type === 'compra' || type === 'permiso') && type !== 'personalizada' && (
+      {(type === 'compra' || type === 'permiso') && (
         <Input
           label="Motivo"
           value={formData.reason}

@@ -3,6 +3,8 @@ import { getServerUser } from '@/lib/server-auth';
 import { RequestCard } from '@/components/requests/RequestCard';
 import { Card } from '@/components/ui/Card';
 import { RequestModel } from '@/lib/models/request';
+import type { Request as RequestData } from '@/types';
+import Link from 'next/link';
 
 export default async function MyRequestsPage() {
   const user = await getServerUser();
@@ -38,14 +40,14 @@ export default async function MyRequestsPage() {
             <Card className="bg-gray-50 border-dashed border-2">
               <div className="text-center py-8">
                 <p className="text-gray-500 italic">No tienes solicitudes en proceso actualmente</p>
-                <a href="/requests/new" className="text-primary hover:underline text-sm font-medium mt-2 inline-block">
+                <Link href="/requests/new" className="text-primary hover:underline text-sm font-medium mt-2 inline-block">
                   + Crear nueva solicitud
-                </a>
+                </Link>
               </div>
             </Card>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {activeRequests.map((request: any) => (
+              {activeRequests.map((request: RequestData) => (
                 <RequestCard key={request.id} request={request} />
               ))}
             </div>
@@ -68,7 +70,7 @@ export default async function MyRequestsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {finalizedRequests.map((request: any) => (
+              {finalizedRequests.map((request: RequestData) => (
                 <RequestCard key={request.id} request={request} />
               ))}
             </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UserModel } from '@/lib/models/user';
 import { z } from 'zod';
 import crypto from 'crypto';
+import type { UserRole } from '@/types';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       validatedData.email,
       validatedData.password,
       validatedData.name,
-      validatedData.role as any,
+      validatedData.role as UserRole,
       confirmationToken
     );
 

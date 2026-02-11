@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const users = UserModel.getAll();
-    
+
     // No devolver contraseñas
     const safeUsers = users.map(({ id, email, name, role, created_at }) => ({
       id,
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ users: safeUsers });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener usuarios' },
       { status: 500 }

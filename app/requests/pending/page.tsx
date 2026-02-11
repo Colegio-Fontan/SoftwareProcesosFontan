@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/server-auth';
 import { RequestCard } from '@/components/requests/RequestCard';
 import { Card } from '@/components/ui/Card';
 import { RequestModel } from '@/lib/models/request';
+import type { Request as RequestData } from '@/types';
 
 export default async function PendingRequestsPage() {
   const user = await getServerUser();
@@ -34,7 +35,7 @@ export default async function PendingRequestsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {requests.map((request: any) => (
+          {requests.map((request: RequestData) => (
             <RequestCard key={request.id} request={request} />
           ))}
         </div>

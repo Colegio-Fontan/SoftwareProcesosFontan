@@ -8,7 +8,7 @@ export interface JWTPayload {
   userId: number;
   email: string;
   role: UserRole;
-  [key: string]: any; // Allow other standard claims like exp, iat
+  [key: string]: unknown; // Allow other standard claims like exp, iat
 }
 
 export async function signToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {

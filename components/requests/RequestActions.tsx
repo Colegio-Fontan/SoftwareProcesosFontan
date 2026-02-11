@@ -61,7 +61,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
       setTimeout(() => {
         router.refresh();
       }, 2000);
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);

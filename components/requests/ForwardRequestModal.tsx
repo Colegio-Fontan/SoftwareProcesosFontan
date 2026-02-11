@@ -29,7 +29,7 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (approverSelection.type === 'default') {
       setError('Debes seleccionar un destinatario para reenviar');
       return;
@@ -44,15 +44,20 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
     setError('');
 
     try {
-      const body: any = {
+      const body: {
+        action: string;
+        comment: string;
+        forward_to_user_id?: number | null;
+        forward_to_role?: string | null;
+      } = {
         action: 'forward',
         comment: comment.trim(),
       };
 
       if (approverSelection.type === 'user') {
-        body.forward_to_user_id = approverSelection.value;
+        body.forward_to_user_id = Number(approverSelection.value);
       } else if (approverSelection.type === 'role') {
-        body.forward_to_role = approverSelection.value;
+        body.forward_to_role = String(approverSelection.value);
       }
 
       const res = await fetch(`/api/requests/${requestId}/forward`, {
@@ -69,7 +74,7 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
       }
 
       onSuccess();
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);
@@ -100,8 +105,8 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <p className="text-sm text-blue-800">
-                💡 <strong>Reenviar una solicitud:</strong> Úsalo cuando la solicitud llegó a ti 
-                pero otra área o persona debe atenderla. El nuevo destinatario verá todo el 
+                💡 <strong>Reenviar una solicitud:</strong> Úsalo cuando la solicitud llegó a ti
+                pero otra área o persona debe atenderla. El nuevo destinatario verá todo el
                 historial y tu comentario explicando el motivo.
               </p>
             </div>

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import type { Request, User } from '@/types';
+import type { Request } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
 
@@ -31,8 +31,8 @@ export default function AdminRequestsPage() {
         } else if (res.status === 401 || res.status === 403) {
           router.replace('/');
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
+        // console.error(err);
       } finally {
         setLoading(false);
       }
