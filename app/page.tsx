@@ -41,43 +41,6 @@ export default function LoginPage() {
     }
   };
 
-  const quickLogin = async (email: string) => {
-    setFormData({ email, password: 'password123' });
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: 'password123' }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Error al iniciar sesión');
-        setIsLoading(false);
-        return;
-      }
-
-      router.push('/home');
-      router.refresh();
-    } catch {
-      setError('Error de conexión.');
-      setIsLoading(false);
-    }
-  };
-
-  const testUsers = [
-    { label: 'Tutor', email: 'tutor@colegiofontan.edu.co', icon: '👨‍🏫' },
-    { label: 'Sistemas', email: 'sistemas@colegiofontan.edu.co', icon: '💻' },
-    { label: 'Humana', email: 'humana@colegiofontan.edu.co', icon: '👥' },
-    { label: 'Cartera', email: 'cartera@colegiofontan.edu.co', icon: '💰' },
-    { label: 'Gerencia', email: 'gerencia@colegiofontan.edu.co', icon: '🏢' },
-    { label: 'Rectoría', email: 'rectoria@colegiofontan.edu.co', icon: '🎓' },
-  ];
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 px-4">
       <Card className="w-full max-w-md">
@@ -124,28 +87,6 @@ export default function LoginPage() {
             <Link href="/register" className="text-primary font-semibold hover:underline">
               Regístrate aquí
             </Link>
-          </p>
-        </div>
-
-        <div className="mt-6 p-4 bg-primary/5 rounded-xl border border-primary/10">
-          <p className="text-xs font-bold text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
-            <span>⚡</span> Acceso Rápido para Pruebas
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            {testUsers.map((u) => (
-              <button
-                key={u.email}
-                onClick={() => quickLogin(u.email)}
-                disabled={isLoading}
-                className="flex items-center gap-2 p-2 rounded-lg bg-white border border-gray-200 hover:border-primary hover:bg-primary/5 transition-all text-left group disabled:opacity-50"
-              >
-                <span className="text-lg group-hover:scale-110 transition-transform">{u.icon}</span>
-                <span className="text-xs font-medium text-gray-700">{u.label}</span>
-              </button>
-            ))}
-          </div>
-          <p className="text-[10px] text-gray-400 mt-3 text-center">
-            * Haz click en un rol para entrar instantáneamente con correo @colegiofontan.edu.co
           </p>
         </div>
       </Card>

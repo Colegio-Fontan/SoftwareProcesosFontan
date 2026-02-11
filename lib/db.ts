@@ -1,10 +1,15 @@
-import { neon, neonConfig } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
 
 // Permite usar Neon en entornos locales y serverless
-if (!process.env.DATABASE_URL) {
-  console.warn('⚠️ DATABASE_URL no encontrada en el entorno');
+const databaseUrl = process.env.DATABASE_URL || '';
+
+if (!databaseUrl && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️ DATABASE_URL no encontrada en el entorno de producción');
 }
 
-const sql = neon(process.env.DATABASE_URL || '');
+// Inicializamos con un string vacío o el real; 
+// @neondatabase/serverless lanzará error si se intenta USAR sin URL, 
+// pero evitamos que rompa el build si no se usa durante el mismo.
+const sql = neon(databaseUrl);
 
 export default sql;
