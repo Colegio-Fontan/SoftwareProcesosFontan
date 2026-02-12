@@ -45,17 +45,23 @@ export async function POST(request: NextRequest) {
       confirmationToken
     );
 
-    // 5. "Enviar" correo de confirmación (Log por ahora)
-    const confirmationUrl = `${new URL(request.url).origin}/confirm?token=${confirmationToken}`;
+    // 5. Enviar correo de confirmación real
+    try {
+      const { sendConfirmationEmail } = await import('@/lib/email');
+      const baseUrl = new URL(request.url).origin;
+      await sendConfirmationEmail(validatedData.email, validatedData.name, confirmationToken, baseUrl);
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // No bloqueamos el registro si el correo falla, pero lo logueamos
+    }
 
+    const confirmationUrl = `${new URL(request.url).origin}/confirm?token=${confirmationToken}`;
     console.log('------------------------------------------');
     console.log('NUEVO REGISTRO:');
     console.log('Email:', validatedData.email);
     console.log('Token de confirmación:', confirmationToken);
     console.log('Enlace de confirmación:', confirmationUrl);
     console.log('------------------------------------------');
-
-    // Aquí iría el envío real con nodemailer/resend/etc.
 
     return NextResponse.json(
       {

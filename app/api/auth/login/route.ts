@@ -29,19 +29,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Verificar confirmación o auto-confirmar si es del dominio
+    // 2. Verificar confirmación
     if (!user.is_confirmed) {
-      if (UserModel.isValidSchoolEmail(email)) {
-        // Si es del dominio pero no está confirmado, permitiremos el login y lo confirmaremos
-        // Esto soluciona el bloqueo de usuarios existentes
-        await UserModel.confirmUser(user.id);
-        console.log('Auto-confirming existing school user:', email);
-      } else {
-        return NextResponse.json(
-          { error: 'Por favor confirma tu correo electrónico antes de iniciar sesión' },
-          { status: 403 }
-        );
-      }
+      return NextResponse.json(
+        { error: 'Por favor confirma tu correo electrónico antes de iniciar sesión' },
+        { status: 403 }
+      );
     }
 
     const isValid = await UserModel.verifyPassword(user, password);
