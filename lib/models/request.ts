@@ -54,7 +54,7 @@ export class RequestModel {
     );
 
     if (assignedToUserId) {
-      this.sendAssignmentEmail(request!, userId, assignedToUserId, false);
+      await this.sendAssignmentEmail(request!, userId, assignedToUserId, false);
     }
 
     return request!;
@@ -329,7 +329,7 @@ export class RequestModel {
     );
 
     if (newAssignedUserId) {
-      this.sendAssignmentEmail(request, userId, newAssignedUserId, true);
+      await this.sendAssignmentEmail(request, userId, newAssignedUserId, true);
     }
 
     return (await this.findById(requestId))!;

@@ -178,13 +178,6 @@ export default function RequestDetailPage({
                 <p className="text-gray-600 whitespace-pre-wrap">{request.description}</p>
               </div>
 
-              {request.reason && (
-                <div>
-                  <h3 className="font-semibold text-gray-700 mb-2">Motivo</h3>
-                  <p className="text-gray-600">{request.reason}</p>
-                </div>
-              )}
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
                 <div>
                   <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">Solicitante</p>

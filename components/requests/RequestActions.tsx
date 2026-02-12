@@ -123,7 +123,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
               ? `La solicitud ha sido enviada a: `
               : `La solicitud ha finalizado con estado: `
             }
-            <strong className="uppercase">{successInfo.nextRole ? (roleLabels[successInfo.nextRole] || successInfo.nextRole) : status === 'aceptado' ? 'ACEPTADA' : 'RECHAZADA'}</strong>
+            <strong className="uppercase">{successInfo.nextRole ? (roleLabels[successInfo.nextRole] || successInfo.nextRole) : successInfo.status === 'aceptado' ? 'ACEPTADA' : 'RECHAZADA'}</strong>
           </p>
         </div>
       )}

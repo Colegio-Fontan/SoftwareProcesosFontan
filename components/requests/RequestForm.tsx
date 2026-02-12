@@ -90,25 +90,6 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         }
       />
 
-      {type === 'personalizada' && (
-        <Textarea
-          label="Contexto adicional (opcional)"
-          value={formData.reason}
-          onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-          rows={4}
-          placeholder="Agrega cualquier contexto adicional, antecedentes o información que ayude a entender mejor tu solicitud..."
-        />
-      )}
-
-      {(type === 'compra' || type === 'permiso') && (
-        <Input
-          label="Motivo"
-          value={formData.reason}
-          onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-          placeholder="Explica el motivo de tu solicitud"
-        />
-      )}
-
       <Select
         label="Nivel de urgencia"
         value={formData.urgency}
