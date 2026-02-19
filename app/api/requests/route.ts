@@ -11,7 +11,7 @@ const createRequestSchema = z.object({
   reason: z.string().optional(),
   urgency: z.enum(['bajo', 'medio', 'alto']).optional(),
   assigned_to_user_id: z.number().optional().nullable(),
-  assigned_to_role: z.string().optional().nullable(),
+  // assigned_to_role removed
   custom_flow: z.boolean().optional(),
 });
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     const newRequest = await RequestModel.create({
       ...data,
-      assigned_to_role: data.assigned_to_role as UserRole
+      // assigned_to_role removed, manually handled below if needed or ignored
     }, user.id);
     console.log('Request created:', newRequest);
 

@@ -38,7 +38,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
   const [approverSelection, setApproverSelection] = useState<{
     type: 'role' | 'user' | 'default';
     value: string | number | null;
-  }>({ type: 'default', value: null });
+  }>({ type: 'user', value: null });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,12 +50,14 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     data.append('urgency', formData.urgency);
 
     // Agregar información del destinatario
-    if (approverSelection.type === 'user' && approverSelection.value) {
+    // Agregar información del destinatario
+    if (approverSelection.value) {
       data.append('assigned_to_user_id', String(approverSelection.value));
-      data.append('custom_flow', 'true');
-    } else if (approverSelection.type === 'role' && approverSelection.value) {
-      data.append('assigned_to_role', String(approverSelection.value));
-      data.append('custom_flow', 'true');
+      data.append('custom_flow', 'true'); // Always custom since we are manually assigning
+    } else {
+      // Enforce selection (optional but recommended based on "manual selection" requirement)
+      alert('Debes seleccionar a un responsable.');
+      return;
     }
 
     await onSubmit(data);

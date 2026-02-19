@@ -13,7 +13,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
-    role: 'empleado'
+    // role removed
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -46,7 +46,7 @@ export default function RegisterPage() {
       }
 
       setSuccess('Usuario registrado con éxito. Revisa tu correo escolar para confirmar tu cuenta.');
-      setFormData({ name: '', email: '', password: '', role: 'empleado' });
+      setFormData({ name: '', email: '', password: '' });
     } catch {
       setError('Error de conexión. Intenta nuevamente.');
     } finally {
@@ -104,21 +104,7 @@ export default function RegisterPage() {
             placeholder="••••••••"
           />
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700">Área / Rol</label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            >
-              <option value="empleado">Empleado / Tutor</option>
-              <option value="sistemas">Sistemas</option>
-              <option value="gestion_humana">Gestión Humana</option>
-              <option value="cartera">Cartera</option>
-              <option value="gerencia">Gerencia</option>
-              <option value="rectoria">Rectoría</option>
-            </select>
-          </div>
+          {/* Role selection removed */}
 
           <Button type="submit" className="w-full" isLoading={isLoading}>
             Registrarse

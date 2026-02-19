@@ -22,13 +22,11 @@ export class RequestModel {
 
     if (assigned_to_user_id) {
       assignedToUserId = assigned_to_user_id;
-      isCustomFlow = true;
-    } else if (assigned_to_role) {
-      currentApproverRole = assigned_to_role;
-      isCustomFlow = true;
-    } else {
-      currentApproverRole = this.getInitialApproverRole(type);
+      isCustomFlow = true; // Manual assignment is always custom flow in this context
     }
+
+    // Role assignment logic removed. 
+    // currentApproverRole remains null.
 
     const rows = await sql`
       INSERT INTO requests (type, title, description, reason, urgency, user_id, current_approver_role, assigned_to_user_id, custom_flow)
@@ -190,30 +188,11 @@ export class RequestModel {
   }
 
   static getInitialApproverRole(type: RequestType): UserRole | null {
-    switch (type) {
-      case 'compra': return 'cartera';
-      case 'permiso':
-      case 'certificado': return 'gestion_humana';
-      case 'soporte': return 'sistemas';
-      case 'mantenimiento': return 'servicios_generales';
-      case 'personalizada': return 'gerencia';
-      default: return null;
-    }
+    return null; // Roles are disabled
   }
 
   static getNextApproverRole(currentRole: UserRole | null, type: RequestType): UserRole | null {
-    if (!currentRole) return null;
-    const approvalFlow: Record<string, string | null> = {
-      cartera: 'gerencia',
-      sistemas: 'gerencia',
-      gestion_humana: 'gerencia',
-      servicios_generales: 'gerencia',
-      gerencia: type === 'compra' ? 'rectoria' : null,
-      rectoria: null,
-      empleado: null,
-      admin: null,
-    };
-    return (approvalFlow[currentRole] as UserRole) || null;
+    return null; // Roles are disabled
   }
 
   static async addHistory(

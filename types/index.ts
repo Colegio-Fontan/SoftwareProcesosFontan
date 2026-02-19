@@ -82,7 +82,8 @@ export interface CreateRequestInput {
   reason?: string;
   urgency?: UrgencyLevel;
   assigned_to_user_id?: number | null;
-  assigned_to_role?: UserRole | null;
+  assigned_to_user_id?: number | null;
+  // assigned_to_role removed
   custom_flow?: boolean;
 }
 
