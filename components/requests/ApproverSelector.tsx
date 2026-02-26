@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Select } from '@/components/ui/Select';
-import type { User, UserRole, RequestType } from '@/types';
+import type { User, RequestType } from '@/types';
 
 interface ApproverSelectorProps {
   requestType: RequestType;
@@ -10,28 +10,7 @@ interface ApproverSelectorProps {
   onChange: (selection: { type: 'role' | 'user' | 'default'; value: string | number | null }) => void;
 }
 
-const roleLabels: Record<UserRole, string> = {
-  empleado: 'Empleado',
-  sistemas: 'Sistemas',
-  gestion_humana: 'Gestión Humana',
-  cartera: 'Cartera',
-  gerencia: 'Gerencia',
-  rectoria: 'Rectoría',
-  servicios_generales: 'Servicios Generales',
-  admin: 'Administrador',
-};
-
-const recommendedApprovers: Record<RequestType, UserRole[]> = {
-  compra: ['cartera', 'gerencia', 'rectoria'],
-  permiso: ['gestion_humana', 'gerencia'],
-  soporte: ['sistemas'],
-  certificado: ['gestion_humana'],
-  mantenimiento: ['servicios_generales', 'gerencia'],
-  personalizada: ['gerencia', 'rectoria', 'gestion_humana'],
-};
-
 export const ApproverSelector: React.FC<ApproverSelectorProps> = ({
-  requestType,
   value,
   onChange,
 }) => {

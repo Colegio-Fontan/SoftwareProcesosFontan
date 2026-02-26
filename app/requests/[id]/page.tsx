@@ -140,7 +140,6 @@ export default function RequestDetailPage({
     (request.status === 'pendiente' || request.status === 'en_proceso');
 
   const isOwner = request.user_id === user.id;
-  const canForward = canApprove;
 
   const debugInfo = null; // Quitamos el debug ya que lo haremos funcionar bien ahora
 

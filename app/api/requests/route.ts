@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { RequestModel } from '@/lib/models/request';
 import { z } from 'zod';
-import type { UserRole } from '@/types';
 
 const createRequestSchema = z.object({
   type: z.enum(['compra', 'permiso', 'soporte', 'certificado', 'mantenimiento', 'personalizada']),

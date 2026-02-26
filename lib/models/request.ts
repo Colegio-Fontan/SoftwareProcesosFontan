@@ -13,10 +13,9 @@ export class RequestModel {
       reason,
       urgency = 'medio',
       assigned_to_user_id,
-      assigned_to_role,
     } = input;
 
-    let currentApproverRole: UserRole | null = null;
+    const currentApproverRole: UserRole | null = null;
     let assignedToUserId: number | null = null;
     let isCustomFlow = false;
 
@@ -47,8 +46,8 @@ export class RequestModel {
       historyComment,
       undefined,
       undefined,
-      currentApproverRole as string | undefined,
-      assignedToUserId as number | undefined
+      currentApproverRole ?? undefined,
+      assignedToUserId ?? undefined
     );
 
     if (assignedToUserId) {
@@ -187,11 +186,11 @@ export class RequestModel {
     return (await this.findById(id))!;
   }
 
-  static getInitialApproverRole(type: RequestType): UserRole | null {
+  static getInitialApproverRole(_type: RequestType): UserRole | null {
     return null; // Roles are disabled
   }
 
-  static getNextApproverRole(currentRole: UserRole | null, type: RequestType): UserRole | null {
+  static getNextApproverRole(_currentRole: UserRole | null, _type: RequestType): UserRole | null {
     return null; // Roles are disabled
   }
 
