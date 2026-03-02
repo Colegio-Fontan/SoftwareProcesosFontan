@@ -138,6 +138,44 @@ export class RequestModel {
     return results as Request[];
   }
 
+  static async findUnassigned(excludeUserId?: number): Promise<Request[]> {
+    const requests = excludeUserId
+      ? await sql`
+          SELECT * FROM requests 
+          WHERE current_approver_role IS NULL 
+          AND assigned_to_user_id IS NULL
+          AND status IN ('pendiente', 'en_proceso')
+          AND user_id != ${excludeUserId}
+          ORDER BY 
+            CASE urgency
+              WHEN 'alto' THEN 1
+              WHEN 'medio' THEN 2
+              WHEN 'bajo' THEN 3
+            END,
+            created_at ASC
+        `
+      : await sql`
+          SELECT * FROM requests 
+          WHERE current_approver_role IS NULL 
+          AND assigned_to_user_id IS NULL
+          AND status IN ('pendiente', 'en_proceso')
+          ORDER BY 
+            CASE urgency
+              WHEN 'alto' THEN 1
+              WHEN 'medio' THEN 2
+              WHEN 'bajo' THEN 3
+            END,
+            created_at ASC
+        `;
+
+    const results = await Promise.all((requests as Request[]).map(async req => {
+      const user = await UserModel.findById(req.user_id);
+      return { ...req, user };
+    }));
+
+    return results as Request[];
+  }
+
   static async getAll(): Promise<Request[]> {
     const requests = await sql`
       SELECT * FROM requests 

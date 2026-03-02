@@ -48,11 +48,9 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                   Mis Solicitudes
                 </Link>
 
-                {user.role !== 'empleado' && (
-                  <Link href="/requests/pending" className="hover:text-secondary transition-colors font-medium">
-                    🔔 Pendientes
-                  </Link>
-                )}
+                <Link href="/requests/pending" className="hover:text-secondary transition-colors font-medium">
+                  🔔 Pendientes
+                </Link>
 
                 {['gerencia', 'rectoria', 'admin'].includes(user.role) && (
                   <Link href="/admin/requests" className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-2">

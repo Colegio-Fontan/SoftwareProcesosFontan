@@ -135,8 +135,11 @@ export default function RequestDetailPage({
   // 3. ¿Es administrador?
   const isAdmin = user.role?.toLowerCase() === 'admin';
 
+  // 4. ¿No tiene asignación? (disponible para todos)
+  const isUnassigned = !request.current_approver_role && !request.assigned_to_user_id;
+
   // Si se cumple cualquiera, y está pendiente, PUEDO ACTUAR
-  const canApprove = (isMyRole || isMyDirectAssignment || isAdmin) &&
+  const canApprove = (isMyRole || isMyDirectAssignment || isAdmin || isUnassigned) &&
     (request.status === 'pendiente' || request.status === 'en_proceso');
 
   const isOwner = request.user_id === user.id;

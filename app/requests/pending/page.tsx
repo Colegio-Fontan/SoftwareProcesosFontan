@@ -12,18 +12,26 @@ export default async function PendingRequestsPage() {
     redirect('/login');
   }
 
-  if (user.role === 'empleado') {
-    redirect('/');
-  }
+  // Combinar solicitudes asignadas al usuario y sin asignar (disponibles para todos)
+  const byRole = await RequestModel.findByApproverRole(user.role);
+  const byUser = await RequestModel.findByAssignedUser(user.id);
+  const unassigned = await RequestModel.findUnassigned(user.id);
 
-  const requests = await RequestModel.findByApproverRole(user.role);
+  // Combinar y eliminar duplicados
+  const combined = [...byRole, ...byUser, ...unassigned];
+  const uniqueIds = new Set();
+  const requests = combined.filter(req => {
+    if (uniqueIds.has(req.id)) return false;
+    uniqueIds.add(req.id);
+    return true;
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-primary mb-2">Solicitudes Pendientes</h1>
         <p className="text-gray-600">
-          Solicitudes que requieren tu aprobación o revisión
+          Solicitudes que requieren tu atención o están disponibles para gestionar
         </p>
       </div>
 

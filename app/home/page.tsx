@@ -123,13 +123,11 @@ export default function HomePage() {
                 Mis Solicitudes
               </Button>
             </Link>
-            {user.role !== 'empleado' && (
-              <Link href="/requests/pending">
-                <Button variant="outline" className="w-full justify-start">
-                  Solicitudes Pendientes
-                </Button>
-              </Link>
-            )}
+            <Link href="/requests/pending">
+              <Button variant="outline" className="w-full justify-start">
+                Solicitudes Pendientes
+              </Button>
+            </Link>
           </div>
         </Card>
 

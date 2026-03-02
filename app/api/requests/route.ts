@@ -28,12 +28,13 @@ export async function GET(request: NextRequest) {
   if (filter === 'my') {
     requests = await RequestModel.findByUserId(user.id);
   } else if (filter === 'pending') {
-    // Combinar solicitudes por rol y asignadas directamente
+    // Combinar solicitudes por rol, asignadas directamente, y sin asignar
     const byRole = await RequestModel.findByApproverRole(user.role);
     const byUser = await RequestModel.findByAssignedUser(user.id);
+    const unassigned = await RequestModel.findUnassigned(user.id);
 
     // Combinar y eliminar duplicados
-    const combined = [...byRole, ...byUser];
+    const combined = [...byRole, ...byUser, ...unassigned];
     const uniqueIds = new Set();
     requests = combined.filter(req => {
       if (uniqueIds.has(req.id)) return false;

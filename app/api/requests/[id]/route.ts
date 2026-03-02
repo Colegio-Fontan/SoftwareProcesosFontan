@@ -78,7 +78,12 @@ export async function PATCH(
     }
 
     // Verificar permisos de aprobación
-    if (existingRequest.current_approver_role !== user.role && existingRequest.user_id !== user.id) {
+    const isApproverByRole = existingRequest.current_approver_role === user.role;
+    const isAssignedToUser = existingRequest.assigned_to_user_id === user.id;
+    const isUnassigned = !existingRequest.current_approver_role && !existingRequest.assigned_to_user_id;
+    const isOwner = existingRequest.user_id === user.id;
+
+    if (!isApproverByRole && !isAssignedToUser && !isUnassigned && !isOwner) {
       return NextResponse.json(
         { error: 'No tienes permisos para esta acción' },
         { status: 403 }
