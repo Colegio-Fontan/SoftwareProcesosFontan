@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import type { Request } from '@/types';
-import { format, isPast, isToday, isTomorrow, startOfDay } from 'date-fns';
+import { format, isPast, isToday, isTomorrow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface RequestCardProps {
@@ -67,7 +67,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
     if (!request.expected_response_date) return null;
 
     const date = new Date(request.expected_response_date);
-    const today = startOfDay(new Date());
     const isOverdue = isPast(date) && !isToday(date);
     const isUrgent = isToday(date) || isTomorrow(date);
 

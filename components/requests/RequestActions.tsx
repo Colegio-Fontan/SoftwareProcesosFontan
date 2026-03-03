@@ -147,7 +147,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
       {successInfo && (
         <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 animate-in fade-in slide-in-from-top-2">
           <p className="text-green-800 font-bold mb-1 flex items-center gap-2">
-            <span>✅</span> {successInfo.status === 'aceptado' ? 'Aprobado correctamente' : 'Rechazado correctamente'}
+            <span>✅</span> {successInfo.status === 'resuelto' ? 'Finalizado correctamente' : successInfo.status === 'aceptado' ? 'Aprobado correctamente' : 'Rechazado correctamente'}
           </p>
           <p className="text-sm text-green-700">
             {successInfo.nextRole

@@ -46,6 +46,7 @@ export async function GET(
       current_approver_role: requestData.current_approver_role,
       assigned_to_user_id: requestData.assigned_to_user_id,
       custom_flow: requestData.custom_flow,
+      expected_response_date: requestData.expected_response_date,
       created_at: requestData.created_at,
       updated_at: requestData.updated_at,
       user: requestData.user,
