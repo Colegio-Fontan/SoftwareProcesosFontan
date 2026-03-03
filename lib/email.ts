@@ -86,6 +86,104 @@ export async function sendProcessAssignmentNotification(
 }
 
 /**
+ * Envía una notificación por correo cuando se resuelve un proceso
+ */
+export async function sendProcessResolutionNotification(
+  recipientUser: User,
+  processData: ProcessNotificationData & { resolutionComment?: string }
+): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+      console.log('📧 Notificación no enviada: Configuración SMTP no disponible');
+      return false;
+    }
+
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@colegiofontan.edu.co';
+    const emailFromName = process.env.EMAIL_FROM_NAME || 'Sistema de Procesos Fontán';
+
+    const subject = `✅ Proceso Finalizado: ${processData.processTitle}`;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proceso Finalizado</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                ✅ Proceso Finalizado
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 30px 20px;">
+              <p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.5;">
+                Hola <strong>${recipientUser.name}</strong>,
+              </p>
+              <p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.5;">
+                Tu solicitud "<strong>${processData.processTitle}</strong>" ha sido marcada como <strong>FINALIZADA</strong>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <div style="background-color: #f9fafb; border-left: 4px solid #10b981; border-radius: 4px; padding: 20px;">
+                <h2 style="margin: 0 0 10px; font-size: 18px; color: #111827;">Comentario de resolución:</h2>
+                <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">
+                  ${processData.resolutionComment || 'El proceso ha sido completado satisfactoriamente.'}
+                </p>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/requests/${processData.processId}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Ver Detalles y Evidencias
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                Este es un correo automático del Sistema de Procesos Fontán.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    const mailOptions = {
+      from: `"${emailFromName}" <${emailFrom}>`,
+      to: recipientUser.email,
+      subject,
+      html: htmlContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar correo de resolución:', error);
+    return false;
+  }
+}
+
+/**
  * Genera el contenido HTML del correo electrónico
  */
 function generateEmailHTML(
@@ -286,6 +384,7 @@ export async function sendConfirmationEmail(
 
 const emailService = {
   sendProcessAssignmentNotification,
+  sendProcessResolutionNotification,
   sendConfirmationEmail,
 };
 

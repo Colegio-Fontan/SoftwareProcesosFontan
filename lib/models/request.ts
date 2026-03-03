@@ -1,7 +1,7 @@
 import sql from '../db';
 import type { Request, CreateRequestInput, RequestType, RequestStatus, UserRole } from '@/types';
 import { UserModel } from './user';
-import { sendProcessAssignmentNotification } from '../email';
+import { sendProcessAssignmentNotification, sendProcessResolutionNotification } from '../email';
 import { getUserById } from '../utils/get-users-by-role';
 
 export class RequestModel {
@@ -13,6 +13,7 @@ export class RequestModel {
       reason,
       urgency = 'medio',
       assigned_to_user_id,
+      expected_response_date,
     } = input;
 
     const currentApproverRole: UserRole | null = null;
@@ -28,8 +29,8 @@ export class RequestModel {
     // currentApproverRole remains null.
 
     const rows = await sql`
-      INSERT INTO requests (type, title, description, reason, urgency, user_id, current_approver_role, assigned_to_user_id, custom_flow)
-      VALUES (${type}, ${title}, ${description}, ${reason || null}, ${urgency}, ${userId}, ${currentApproverRole}, ${assignedToUserId}, ${isCustomFlow})
+      INSERT INTO requests (type, title, description, reason, urgency, user_id, current_approver_role, assigned_to_user_id, custom_flow, expected_response_date)
+      VALUES (${type}, ${title}, ${description}, ${reason || null}, ${urgency}, ${userId}, ${currentApproverRole}, ${assignedToUserId}, ${isCustomFlow}, ${expected_response_date || null})
       RETURNING *
     `;
 
@@ -218,10 +219,35 @@ export class RequestModel {
       WHERE id = ${id}
     `;
 
-    const action = status === 'aceptado' ? 'aprobado' : status === 'rechazado' ? 'rechazado' : 'enviado';
+    const action = status === 'aceptado' ? 'aprobado' : status === 'rechazado' ? 'rechazado' : status === 'resuelto' ? 'comentado' : 'enviado';
     await this.addHistory(id, userId, action, comment, previousStatus, newStatus, newApproverRole as string | null);
 
+    if (status === 'resuelto') {
+      await this.sendResolutionEmail((await this.findById(id))!, userId, comment);
+    }
+
     return (await this.findById(id))!;
+  }
+
+  private static async sendResolutionEmail(request: Request, actionUserId: number, comment?: string) {
+    try {
+      const creator = await getUserById(request.user_id);
+      if (!creator || !creator.email) return;
+
+      const processData = {
+        processId: request.id,
+        processType: request.type,
+        processTitle: request.title,
+        processDescription: request.description,
+        createdBy: { name: creator.name, email: creator.email },
+        urgency: request.urgency,
+        resolutionComment: comment,
+      };
+
+      await sendProcessResolutionNotification(creator, processData);
+    } catch (error) {
+      console.error('❌ Error al enviar notificación de resolución:', error);
+    }
   }
 
   static getInitialApproverRole(_type: RequestType): UserRole | null {

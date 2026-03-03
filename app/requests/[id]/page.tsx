@@ -218,6 +218,17 @@ export default function RequestDetailPage({
                     Fecha de creación: {format(new Date(request.created_at), "d 'de' MMMM, yyyy 'a las' HH:mm")}
                   </p>
                 </div>
+
+                {request.expected_response_date && (
+                  <div className="md:col-span-2 pt-2 border-t mt-2">
+                    <p className="text-xs text-amber-600 font-bold uppercase tracking-wider mb-1">
+                      📅 Fecha esperada de respuesta
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {format(new Date(request.expected_response_date), "d 'de' MMMM, yyyy")}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -244,6 +255,40 @@ export default function RequestDetailPage({
                       </p>
                     )}
                   </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {request.attachments && request.attachments.length > 0 && (
+            <Card>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                📎 Archivos y Evidencias
+                <Badge variant="info">{request.attachments.length}</Badge>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {request.attachments.map((file) => (
+                  <a
+                    key={file.id}
+                    href={`/api/uploads/${file.filename}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center p-3 border rounded-xl hover:bg-gray-50 transition-colors group"
+                  >
+                    <div className="bg-primary/5 p-2 rounded-lg mr-3 group-hover:bg-primary/10 transition-colors">
+                      <span className="text-xl">
+                        {file.mime_type.includes('image') ? '🖼️' : '📄'}
+                      </span>
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {file.original_filename}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </a>
                 ))}
               </div>
             </Card>
@@ -294,7 +339,7 @@ export default function RequestDetailPage({
             )}
           </Card>
         </div>
-      </div>
+      </div >
 
       {showForwardModal && (
         <ForwardRequestModal
@@ -306,8 +351,9 @@ export default function RequestDetailPage({
             refreshRequest();
           }}
         />
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 

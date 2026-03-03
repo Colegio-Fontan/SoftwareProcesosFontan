@@ -26,8 +26,13 @@ export async function POST(
     );
   }
 
-  // Verificar que el usuario es el creador de la solicitud
-  if (existingRequest.user_id !== user.id) {
+  // Verificar permisos: dueño o asignado actual
+  const isOwner = existingRequest.user_id === user.id;
+  const isAssigned = existingRequest.assigned_to_user_id === user.id;
+  const isApproverRole = existingRequest.current_approver_role === user.role;
+  const isAdmin = user.role === 'admin';
+
+  if (!isOwner && !isAssigned && !isApproverRole && !isAdmin) {
     return NextResponse.json(
       { error: 'No tienes permisos para agregar archivos a esta solicitud' },
       { status: 403 }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
+import { ResolveRequestModal } from './ResolveRequestModal';
 import type { RequestStatus } from '@/types';
 
 interface RequestActionsProps {
@@ -20,6 +21,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successInfo, setSuccessInfo] = useState<{ status: string, nextRole?: string } | null>(null);
+  const [showResolveModal, setShowResolveModal] = useState(false);
 
   const roleLabels: Record<string, string> = {
     sistemas: 'Sistemas',
@@ -68,11 +70,17 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
     }
   };
 
-  if (currentStatus === 'aceptado' || currentStatus === 'rechazado') {
+  if (currentStatus === 'aceptado' || currentStatus === 'rechazado' || currentStatus === 'resuelto' || currentStatus === 'cerrado') {
     return (
-      <p className="text-sm text-gray-500">
-        Esta solicitud ya ha sido {currentStatus === 'aceptado' ? 'aceptada' : 'rechazada'}
-      </p>
+      <div className="space-y-2">
+        <p className="text-sm text-center font-medium py-3 px-4 rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+          Esta solicitud ya ha sido {
+            currentStatus === 'aceptado' ? 'aceptada' :
+              currentStatus === 'rechazado' ? 'rechazada' :
+                currentStatus === 'resuelto' ? 'finalizada' : 'cerrada'
+          }
+        </p>
+      </div>
     );
   }
 
@@ -92,26 +100,49 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
         placeholder="Agrega un comentario sobre tu decisión..."
       />
 
-      <div className="flex gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Button
           variant="primary"
-          onClick={() => handleAction('aceptado')}
+          onClick={() => setShowResolveModal(true)}
           isLoading={isLoading}
           disabled={!!successInfo}
-          className="flex-1"
+          className="bg-green-600 hover:bg-green-700 text-white font-bold"
         >
-          Aprobar
+          ✅ Finalizar Proceso (Subir Evidencias)
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => handleAction('rechazado')}
-          isLoading={isLoading}
-          disabled={!!successInfo}
-          className="flex-1"
-        >
-          Rechazar
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => handleAction('aceptado')}
+            isLoading={isLoading}
+            disabled={!!successInfo}
+            className="flex-1 border-amber-400 text-amber-700 hover:bg-amber-50"
+          >
+            Aceptar / En Trámite
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleAction('rechazado')}
+            isLoading={isLoading}
+            disabled={!!successInfo}
+            className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+          >
+            Rechazar
+          </Button>
+        </div>
       </div>
+
+      {showResolveModal && (
+        <ResolveRequestModal
+          requestId={requestId}
+          onClose={() => setShowResolveModal(false)}
+          onSuccess={() => {
+            setShowResolveModal(false);
+            setSuccessInfo({ status: 'resuelto' });
+            setTimeout(() => router.refresh(), 2000);
+          }}
+        />
+      )}
 
       {successInfo && (
         <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 animate-in fade-in slide-in-from-top-2">
@@ -123,7 +154,9 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
               ? `La solicitud ha sido enviada a: `
               : `La solicitud ha finalizado con estado: `
             }
-            <strong className="uppercase">{successInfo.nextRole ? (roleLabels[successInfo.nextRole] || successInfo.nextRole) : successInfo.status === 'aceptado' ? 'ACEPTADA' : 'RECHAZADA'}</strong>
+            <strong className="uppercase">{successInfo.nextRole ? (roleLabels[successInfo.nextRole] || successInfo.nextRole) :
+              successInfo.status === 'resuelto' ? 'FINALIZADA' :
+                successInfo.status === 'aceptado' ? 'ACEPTADA' : 'RECHAZADA'}</strong>
           </p>
         </div>
       )}
