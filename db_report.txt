@@ -1,0 +1,2 @@
+SQLite Users: cartera@colegiofontan.edu.co, gerencia@colegiofontan.edu.co, humana@colegiofontan.edu.co, rectoria@colegiofontan.edu.co, sistemas@colegiofontan.edu.co, tutor@colegiofontan.edu.co
+PostgreSQL Error: This function can now be called only as a tagged-template function: sql`SELECT ${value}`, not sql("SELECT $1", [value], options). For a conventional function call with value placeholders ($1, $2, etc.), use sql.query("SELECT $1", [value], options).

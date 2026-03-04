@@ -1,0 +1,62 @@
+[
+  {
+    "id": 17,
+    "email": "gerencia@colegiofontan.edu.co",
+    "name": "Alexander Valencia Patiño",
+    "role": "gerencia"
+  },
+  {
+    "id": 18,
+    "email": "cartera@colegiofontan.edu.co",
+    "name": "Mariana Naranjo",
+    "role": "cartera"
+  },
+  {
+    "id": 19,
+    "email": "secretariaacademica@colegiofontan.edu.co",
+    "name": "Claudia Osorio",
+    "role": "empleado"
+  },
+  {
+    "id": 21,
+    "email": "contabilidad@colegiofontan.edu.co",
+    "name": "Marcela Taborda",
+    "role": "empleado"
+  },
+  {
+    "id": 20,
+    "email": "recepcion@colegiofontan.edu.co",
+    "name": "Jenniffer García Cáceres",
+    "role": "empleado"
+  },
+  {
+    "id": 23,
+    "email": "gestionhumana@colegiofontan.edu.co",
+    "name": "Patricia Taborda",
+    "role": "empleado"
+  },
+  {
+    "id": 22,
+    "email": "auxproduccion@colegiofontan.edu.co",
+    "name": "Mayra Alejandra Valencia Ruiz ",
+    "role": "empleado"
+  },
+  {
+    "id": 24,
+    "email": "produccion1@colegiofontan.edu.co",
+    "name": "Yenny Gil Ospina",
+    "role": "empleado"
+  },
+  {
+    "id": 25,
+    "email": "consultorti@colegiofontan.edu.co",
+    "name": "Pedro Saldarriaga",
+    "role": "empleado"
+  },
+  {
+    "id": 26,
+    "email": "admisiones@colegiofontan.edu.co",
+    "name": "Natalia Solano",
+    "role": "empleado"
+  }
+]

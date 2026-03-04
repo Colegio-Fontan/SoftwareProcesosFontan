@@ -63,6 +63,47 @@ export default function AdminUsersPage() {
     }
   };
 
+  const [editingUser, setEditingUser] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    role: 'empleado' as UserRole,
+  });
+
+  const handleEditClick = (user: User) => {
+    setEditingUser(user.id);
+    setEditFormData({
+      name: user.name,
+      role: user.role,
+    });
+    setError('');
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setError('');
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editingUser, ...editFormData }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Error al actualizar usuario');
+        return;
+      }
+
+      setEditingUser(null);
+      fetchUsers();
+    } catch {
+      setError('Error de conexión');
+    }
+  };
+
   const roleLabels: Record<string, string> = {
     empleado: 'Empleado',
     sistemas: 'Sistemas',
@@ -80,15 +121,24 @@ export default function AdminUsersPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary">Gestión de Usuarios</h1>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => {
+          setShowForm(!showForm);
+          if (showForm) setEditingUser(null);
+        }}>
           {showForm ? 'Cancelar' : 'Nuevo Usuario'}
         </Button>
       </div>
 
+      {error && !showForm && !editingUser && (
+        <div className="mb-4 bg-red-50 text-red-700 p-3 rounded">
+          {error}
+        </div>
+      )}
+
       {showForm && (
-        <Card className="mb-8">
+        <Card className="mb-8 border-l-4 border-primary">
           <h2 className="text-xl font-semibold mb-4">Crear Nuevo Usuario</h2>
-          {error && (
+          {error && showForm && (
             <div className="mb-4 bg-red-50 text-red-700 p-3 rounded">
               {error}
             </div>
@@ -128,6 +178,39 @@ export default function AdminUsersPage() {
         </Card>
       )}
 
+      {editingUser && (
+        <Card className="mb-8 border-l-4 border-yellow-500">
+          <h2 className="text-xl font-semibold mb-4 text-yellow-700">Editar Usuario</h2>
+          {error && editingUser && (
+            <div className="mb-4 bg-red-50 text-red-700 p-3 rounded">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <Input
+              label="Nombre Completo"
+              value={editFormData.name}
+              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              required
+            />
+            <Select
+              label="Rol"
+              value={editFormData.role}
+              onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as UserRole })}
+              options={Object.entries(roleLabels).map(([value, label]) => ({ value, label }))}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" type="button" onClick={() => setEditingUser(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary">
+                Actualizar Usuario
+              </Button>
+            </div>
+          </form>
+        </Card>
+      )}
+
       <Card>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -135,8 +218,9 @@ export default function AdminUsersPage() {
               <tr className="border-b border-gray-200">
                 <th className="py-3 px-4 font-semibold text-gray-700">Nombre</th>
                 <th className="py-3 px-4 font-semibold text-gray-700">Email</th>
+                <th className="py-3 px-4 font-semibold text-gray-700">Estado</th>
                 <th className="py-3 px-4 font-semibold text-gray-700">Rol</th>
-                <th className="py-3 px-4 font-semibold text-gray-700">Fecha Registro</th>
+                <th className="py-3 px-4 font-semibold text-gray-700">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -145,12 +229,29 @@ export default function AdminUsersPage() {
                   <td className="py-3 px-4">{user.name}</td>
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">
-                    <span className="inline-block px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${user.is_confirmed
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {user.is_confirmed ? 'Confirmado' : 'Pendiente'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${user.role === 'admin'
+                      ? 'bg-purple-100 text-purple-800'
+                      : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {roleLabels[user.role] || user.role}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-500">
-                    {new Date(user.created_at).toLocaleDateString()}
+                  <td className="py-3 px-4">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditClick(user)}
+                    >
+                      ✏️ Editar
+                    </Button>
                   </td>
                 </tr>
               ))}
