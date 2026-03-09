@@ -1,7 +1,7 @@
 import sql from '../db';
 import type { Request, CreateRequestInput, RequestType, RequestStatus, UserRole } from '@/types';
 import { UserModel } from './user';
-import { sendProcessAssignmentNotification, sendProcessResolutionNotification } from '../email';
+import { sendProcessAssignmentNotification, sendProcessResolutionNotification, sendProcessStatusUpdateNotification } from '../email';
 import { getUserById } from '../utils/get-users-by-role';
 
 export class RequestModel {
@@ -195,7 +195,8 @@ export class RequestModel {
     id: number,
     status: RequestStatus,
     userId: number,
-    comment?: string
+    comment?: string,
+    expectedResponseDate?: string
   ): Promise<Request> {
     const request = await this.findById(id);
     if (!request) throw new Error('Solicitud no encontrada');
@@ -213,20 +214,56 @@ export class RequestModel {
       newApproverRole = null;
     }
 
-    await sql`
-      UPDATE requests 
-      SET status = ${newStatus}, current_approver_role = ${newApproverRole}, updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-    `;
+    if (status === 'aceptado' && expectedResponseDate) {
+      await sql`
+        UPDATE requests 
+        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, expected_response_date = ${expectedResponseDate}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    } else {
+      await sql`
+        UPDATE requests 
+        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${id}
+      `;
+    }
 
     const action = status === 'aceptado' ? 'aprobado' : status === 'rechazado' ? 'rechazado' : status === 'resuelto' ? 'comentado' : 'enviado';
     await this.addHistory(id, userId, action, comment, previousStatus, newStatus, newApproverRole as string | null);
 
     if (status === 'resuelto') {
       await this.sendResolutionEmail((await this.findById(id))!, userId, comment);
+    } else if (status === 'aceptado' || status === 'rechazado') {
+      await this.sendStatusUpdateEmail((await this.findById(id))!, userId, status, comment, expectedResponseDate);
     }
 
     return (await this.findById(id))!;
+  }
+
+  private static async sendStatusUpdateEmail(request: Request, actionUserId: number, newStatus: string, comment?: string, expectedDate?: string) {
+    try {
+      const creator = await getUserById(request.user_id);
+      if (!creator || !creator.email) return;
+
+      const actor = await getUserById(actionUserId);
+
+      const processData = {
+        processId: request.id,
+        processType: request.type,
+        processTitle: request.title,
+        processDescription: request.description,
+        createdBy: { name: creator.name, email: creator.email },
+        urgency: request.urgency,
+        newStatus,
+        statusComment: comment,
+        updatedBy: actor ? { name: actor.name, role: actor.role || undefined } : undefined,
+        expectedDate: expectedDate || request.expected_response_date || undefined
+      };
+
+      await sendProcessStatusUpdateNotification(creator, processData);
+    } catch (error) {
+      console.error('❌ Error al enviar notificación de actualización de estado:', error);
+    }
   }
 
   private static async sendResolutionEmail(request: Request, actionUserId: number, comment?: string) {
@@ -372,6 +409,28 @@ export class RequestModel {
 
     if (newAssignedUserId) {
       await this.sendAssignmentEmail(request, userId, newAssignedUserId, true);
+    }
+
+    // Notificar al creador sobre el reenvío
+    try {
+      const creator = await getUserById(request.user_id);
+      if (creator && creator.email) {
+        const actor = await getUserById(userId);
+        const processData = {
+          processId: request.id,
+          processType: request.type,
+          processTitle: request.title,
+          processDescription: request.description,
+          createdBy: { name: creator.name, email: creator.email },
+          urgency: request.urgency,
+          newStatus: 'reenviado',
+          statusComment: comment,
+          updatedBy: actor ? { name: actor.name, role: actor.role || undefined } : undefined
+        };
+        await sendProcessStatusUpdateNotification(creator, processData, true);
+      }
+    } catch (error) {
+      console.error('❌ Error al enviar notificación de reenvío al creador:', error);
     }
 
     return (await this.findById(requestId))!;

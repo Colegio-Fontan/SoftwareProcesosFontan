@@ -184,6 +184,142 @@ export async function sendProcessResolutionNotification(
 }
 
 /**
+ * Envía una notificación por correo al creador sobre cambios de estado menores
+ */
+export async function sendProcessStatusUpdateNotification(
+  recipientUser: User,
+  processData: ProcessNotificationData & { newStatus: string; statusComment?: string; updatedBy?: { name: string; role?: string }; expectedDate?: string },
+  isForwardAction = false
+): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+      console.log('📧 Notificación no enviada: Configuración SMTP no disponible');
+      return false;
+    }
+
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@colegiofontan.edu.co';
+    const emailFromName = process.env.EMAIL_FROM_NAME || 'Sistema de Procesos Fontán';
+
+    let subject = `🔄 Actualización en tu proceso: ${processData.processTitle}`;
+    let icon = '🔄';
+    let gradient = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+    let statusDisplay = processData.newStatus.toUpperCase();
+
+    if (processData.newStatus === 'rechazado') {
+      subject = `❌ Proceso Rechazado: ${processData.processTitle}`;
+      icon = '❌';
+      gradient = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+    } else if (processData.newStatus === 'aceptado') {
+      subject = `👍 Proceso Recibido: ${processData.processTitle}`;
+      icon = '👍';
+      gradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+      statusDisplay = 'RECIBIDO';
+    } else if (isForwardAction) {
+      subject = `↗️ Proceso Reenviado: ${processData.processTitle}`;
+      icon = '↗️';
+      gradient = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
+      statusDisplay = 'REENVIADO';
+    }
+
+    const formatter = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' });
+    const formattedDate = processData.expectedDate ? formatter.format(new Date(processData.expectedDate)) : null;
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Actualización de Proceso</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: ${gradient}; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                ${icon} Actualización de Estado
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 30px 20px;">
+              <p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.5;">
+                Hola <strong>${recipientUser.name}</strong>,
+              </p>
+              <p style="margin: 0 0 10px; font-size: 16px; color: #374151; line-height: 1.5;">
+                Tu solicitud "<strong>${processData.processTitle}</strong>" ahora se encuentra en estado <strong>${statusDisplay}</strong>.
+              </p>
+              ${processData.updatedBy ? `
+              <p style="margin: 0 0 20px; font-size: 14px; color: #6b7280; line-height: 1.5;">
+                Actualizado por: <strong>${processData.updatedBy.name}</strong> ${processData.updatedBy.role ? `(${processData.updatedBy.role})` : ''}
+              </p>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <div style="background-color: #f9fafb; border-left: 4px solid #9ca3af; border-radius: 4px; padding: 20px;">
+                ${formattedDate ? `
+                <div style="margin-bottom: 15px;">
+                  <h2 style="margin: 0 0 5px; font-size: 16px; color: #111827;">📅 Fecha Estimada de Respuesta:</h2>
+                  <p style="margin: 0; font-size: 15px; color: #374151; font-weight: 600;">
+                    ${formattedDate}
+                  </p>
+                </div>
+                ` : ''}
+                <div>
+                  <h2 style="margin: 0 0 10px; font-size: 16px; color: #111827;">Comentario:</h2>
+                  <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6; font-style: italic;">
+                    "${processData.statusComment || 'Sin comentarios adicionales.'}"
+                  </p>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/requests/${processData.processId}" 
+                 style="display: inline-block; background: ${gradient}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Ver Detalles
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                Este es un correo automático del Sistema de Procesos Fontán.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    const mailOptions = {
+      from: `"${emailFromName}" <${emailFrom}>`,
+      to: recipientUser.email,
+      subject,
+      html: htmlContent,
+    };
+
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar correo de actualización de estado:', error);
+    return false;
+  }
+}
+
+
+/**
  * Genera el contenido HTML del correo electrónico
  */
 function generateEmailHTML(
@@ -385,6 +521,7 @@ export async function sendConfirmationEmail(
 const emailService = {
   sendProcessAssignmentNotification,
   sendProcessResolutionNotification,
+  sendProcessStatusUpdateNotification,
   sendConfirmationEmail,
 };
 
