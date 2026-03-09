@@ -70,13 +70,6 @@ export class UserModel {
     // Note: Since we use neon serverless, we'll do simple per-field update or a combined one if we had a helper.
     // For now, let's implement role and name updates specifically as they are the most common.
 
-    let updateQuery = sql`UPDATE users SET `;
-    const updates: any[] = [];
-
-    if (data.name !== undefined) updates.push(sql`name = ${data.name}`);
-    if (data.role !== undefined) updates.push(sql`role = ${data.role}`);
-    if (data.is_confirmed !== undefined) updates.push(sql`is_confirmed = ${data.is_confirmed}`);
-
     // This is a bit tricky with raw sql template literal if we want it fully dynamic.
     // Let's do it specifically for what we need most.
 

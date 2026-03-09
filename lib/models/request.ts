@@ -287,11 +287,11 @@ export class RequestModel {
     }
   }
 
-  static getInitialApproverRole(_type: RequestType): UserRole | null {
+  static getInitialApproverRole(): UserRole | null {
     return null; // Roles are disabled
   }
 
-  static getNextApproverRole(_currentRole: UserRole | null, _type: RequestType): UserRole | null {
+  static getNextApproverRole(): UserRole | null {
     return null; // Roles are disabled
   }
 

@@ -125,7 +125,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
             required
             aria-required="true"
           />
-          {dateError && <p className="text-xs text-red-600 mt-1">Obligatorio para la acción "Recibido".</p>}
+          {dateError && <p className="text-xs text-red-600 mt-1">Obligatorio para la acción &quot;Recibido&quot;.</p>}
         </div>
 
         <div>
