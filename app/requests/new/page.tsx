@@ -58,6 +58,17 @@ export default function NewRequestPage() {
         return;
       }
 
+      // Subir archivos adjuntos si hay
+      const attachedFiles = formData.getAll('files') as File[];
+      for (const file of attachedFiles) {
+        const uploadData = new FormData();
+        uploadData.append('file', file);
+        await fetch(`/api/requests/${result.request.id}/attachments`, {
+          method: 'POST',
+          body: uploadData,
+        });
+      }
+
       router.push(`/requests/${result.request.id}`);
     } catch {
       setError('Error de conexión. Intenta nuevamente.');

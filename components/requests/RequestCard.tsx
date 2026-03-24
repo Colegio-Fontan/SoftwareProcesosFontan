@@ -122,6 +122,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
               ⚙️ Reenviado/Personalizado
             </Badge>
           )}
+          {request.attachments && request.attachments.length > 0 && (
+            <Badge variant="default">
+              📎 {request.attachments.length}
+            </Badge>
+          )}
         </div>
 
         <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">

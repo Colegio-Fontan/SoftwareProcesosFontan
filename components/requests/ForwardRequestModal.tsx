@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { ApproverSelector } from './ApproverSelector';
+import { ImageAttachmentPicker } from './ImageAttachmentPicker';
 import type { RequestType } from '@/types';
 
 interface ForwardRequestModalProps {
@@ -20,6 +21,7 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
   onSuccess,
 }) => {
   const [comment, setComment] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [approverSelection, setApproverSelection] = useState<{
@@ -44,6 +46,20 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
     setError('');
 
     try {
+      // 1. Subir archivos adjuntos si hay
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes = await fetch(`/api/requests/${requestId}/attachments`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadRes.ok) {
+          throw new Error(`Error al subir archivo: ${file.name}`);
+        }
+      }
+
+      // 2. Ejecutar el reenvío
       const body: {
         action: string;
         comment: string;
@@ -74,8 +90,8 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
       }
 
       onSuccess();
-    } catch {
-      setError('Error de conexión. Intenta nuevamente.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error de conexión. Intenta nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +136,12 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
               placeholder="Ej: No tenemos mouse disponible en Sistemas, necesita ser comprado por Cartera..."
             />
 
+            <ImageAttachmentPicker
+              files={files}
+              onFilesChange={setFiles}
+              label="Adjuntar imágenes de soporte (Opcional)"
+            />
+
             <ApproverSelector
               requestType={requestType}
               value={approverSelection}
@@ -145,6 +167,7 @@ export const ForwardRequestModal: React.FC<ForwardRequestModalProps> = ({
     </div>
   );
 };
+
 
 
 

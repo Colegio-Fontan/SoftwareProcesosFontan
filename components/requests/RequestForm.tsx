@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { ApproverSelector } from './ApproverSelector';
+import { ImageAttachmentPicker } from './ImageAttachmentPicker';
 import type { RequestType, UrgencyLevel } from '@/types';
 
 interface RequestFormProps {
@@ -36,6 +37,8 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     expected_response_date: '',
   });
 
+  const [files, setFiles] = useState<File[]>([]);
+
   const [approverSelection, setApproverSelection] = useState<{
     type: 'role' | 'user' | 'default';
     value: string | number | null;
@@ -53,13 +56,16 @@ export const RequestForm: React.FC<RequestFormProps> = ({
       data.append('expected_response_date', formData.expected_response_date);
     }
 
-    // Agregar información del destinatario
+    // Agregar archivos adjuntos
+    files.forEach((file) => {
+      data.append('files', file);
+    });
+
     // Agregar información del destinatario
     if (approverSelection.value) {
       data.append('assigned_to_user_id', String(approverSelection.value));
-      data.append('custom_flow', 'true'); // Always custom since we are manually assigning
+      data.append('custom_flow', 'true');
     } else {
-      // Enforce selection (optional but recommended based on "manual selection" requirement)
       alert('Debes seleccionar a un responsable.');
       return;
     }
@@ -113,6 +119,12 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         value={formData.expected_response_date}
         onChange={(e) => setFormData({ ...formData, expected_response_date: e.target.value })}
         min={new Date().toISOString().split('T')[0]}
+      />
+
+      {/* Adjuntos opcionales */}
+      <ImageAttachmentPicker
+        files={files}
+        onFilesChange={setFiles}
       />
 
       {/* Selector de destinatario */}

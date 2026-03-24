@@ -57,6 +57,7 @@ export default function RequestDetailPage({
   const [loading, setLoading] = useState(true);
   const [showForwardModal, setShowForwardModal] = useState(false);
   const [requestId, setRequestId] = useState<number>(0);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -266,30 +267,45 @@ export default function RequestDetailPage({
                 📎 Archivos y Evidencias
                 <Badge variant="info">{request.attachments.length}</Badge>
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {request.attachments.map((file) => (
-                  <a
-                    key={file.id}
-                    href={`/api/uploads/${file.filename}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center p-3 border rounded-xl hover:bg-gray-50 transition-colors group"
-                  >
-                    <div className="bg-primary/5 p-2 rounded-lg mr-3 group-hover:bg-primary/10 transition-colors">
-                      <span className="text-xl">
-                        {file.mime_type.includes('image') ? '🖼️' : '📄'}
-                      </span>
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {file.original_filename}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(file.size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                  </a>
-                ))}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {request.attachments.map((file) => {
+                  const isImage = file.mime_type.includes('image');
+                  return isImage ? (
+                    <button
+                      key={file.id}
+                      onClick={() => setLightboxImage(`/api/uploads/${file.filename}`)}
+                      className="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer bg-gray-100"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/api/uploads/${file.filename}`}
+                        alt={file.original_filename}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <span className="text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg">🔍</span>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <p className="text-xs text-white truncate font-medium">{file.original_filename}</p>
+                        <p className="text-[10px] text-white/70">{(file.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                    </button>
+                  ) : (
+                    <a
+                      key={file.id}
+                      href={`/api/uploads/${file.filename}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary/30 transition-all group aspect-square"
+                    >
+                      <div className="bg-primary/5 p-3 rounded-lg group-hover:bg-primary/10 transition-colors mb-2">
+                        <span className="text-3xl">📄</span>
+                      </div>
+                      <p className="text-xs font-medium text-gray-700 truncate max-w-full">{file.original_filename}</p>
+                      <p className="text-[10px] text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                    </a>
+                  );
+                })}
               </div>
             </Card>
           )}
@@ -353,6 +369,28 @@ export default function RequestDetailPage({
         />
       )
       }
+
+      {/* Lightbox para imágenes */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 cursor-pointer"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white/80 hover:text-white text-4xl font-light z-10 transition-colors"
+          >
+            ×
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxImage}
+            alt="Vista completa"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div >
   );
 }

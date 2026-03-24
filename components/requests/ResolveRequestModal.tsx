@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
+import { ImageAttachmentPicker } from './ImageAttachmentPicker';
 
 interface ResolveRequestModalProps {
   requestId: number;
@@ -19,13 +20,6 @@ export const ResolveRequestModal: React.FC<ResolveRequestModalProps> = ({
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +65,7 @@ export const ResolveRequestModal: React.FC<ResolveRequestModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -96,39 +90,11 @@ export const ResolveRequestModal: React.FC<ResolveRequestModalProps> = ({
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">Evidencias (Opcional)</label>
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary hover:bg-primary/5 cursor-pointer transition-all group"
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  multiple
-                />
-                <div className="flex flex-col items-center">
-                  <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">📁</span>
-                  <p className="text-sm text-gray-500 group-hover:text-primary font-medium">
-                    Haz clic para subir fotos, documentos o facturas
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">Formatos: PDF, JPG, PNG, DOCX</p>
-                </div>
-              </div>
-
-              {files.length > 0 && (
-                <ul className="mt-3 space-y-2">
-                  {files.map((file, idx) => (
-                    <li key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-100 text-sm">
-                      <span className="truncate max-w-[200px]">{file.name}</span>
-                      <span className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <ImageAttachmentPicker
+              files={files}
+              onFilesChange={setFiles}
+              label="Evidencias (Opcional)"
+            />
 
             {error && (
               <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
