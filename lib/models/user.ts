@@ -106,4 +106,30 @@ export class UserModel {
   static async delete(userId: number): Promise<void> {
     await sql`DELETE FROM users WHERE id = ${userId}`;
   }
+
+  static async setResetToken(userId: number, token: string, expiresAt: Date): Promise<void> {
+    await sql`
+      UPDATE users
+      SET reset_token = ${token}, reset_token_expires = ${expiresAt.toISOString()}
+      WHERE id = ${userId}
+    `;
+  }
+
+  static async findByResetToken(token: string): Promise<User | undefined> {
+    const rows = await sql`
+      SELECT * FROM users
+      WHERE reset_token = ${token}
+        AND reset_token_expires > NOW()
+    `;
+    return rows[0] as User | undefined;
+  }
+
+  static async resetPassword(userId: number, newPassword: string): Promise<void> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await sql`
+      UPDATE users
+      SET password = ${hashedPassword}, reset_token = NULL, reset_token_expires = NULL
+      WHERE id = ${userId}
+    `;
+  }
 }

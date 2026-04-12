@@ -518,11 +518,71 @@ export async function sendConfirmationEmail(
   }
 }
 
+/**
+ * Envía un correo con el link para restablecer la contraseña
+ */
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  token: string,
+  baseUrl: string
+): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+    if (!transporter) return false;
+
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@colegiofontan.edu.co';
+    const emailFromName = process.env.EMAIL_FROM_NAME || 'Sistema de Procesos Fontán';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    const mailOptions = {
+      from: `"${emailFromName}" <${emailFrom}>`,
+      to: email,
+      subject: '🔑 Restablecer contraseña - Sistema de Procesos Fontán',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+          <h1 style="color: #667eea; font-size: 24px;">Restablecer contraseña</h1>
+          <p style="color: #374151; font-size: 16px; line-height: 1.5;">
+            Hola <strong>${name}</strong>,
+          </p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.5;">
+            Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el botón de abajo para crear una nueva contraseña:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+              Restablecer mi contraseña
+            </a>
+          </div>
+          <p style="color: #6b7280; font-size: 14px;">
+            Este enlace es válido por <strong>1 hora</strong>. Si no solicitaste este cambio, puedes ignorar este correo.
+          </p>
+          <p style="color: #6b7280; font-size: 14px;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+            <a href="${resetUrl}" style="color: #667eea;">${resetUrl}</a>
+          </p>
+          <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+          <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+            Este es un correo automático, por favor no respondas a este mensaje.
+          </p>
+        </div>
+      `.trim(),
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Correo de restablecimiento enviado a ${email}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar correo de restablecimiento:', error);
+    return false;
+  }
+}
+
 const emailService = {
   sendProcessAssignmentNotification,
   sendProcessResolutionNotification,
   sendProcessStatusUpdateNotification,
   sendConfirmationEmail,
+  sendPasswordResetEmail,
 };
 
 export default emailService;

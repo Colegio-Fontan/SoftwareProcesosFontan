@@ -20,7 +20,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rutas públicas
-  const isPublicRoute = pathname === '/' || pathname === '/register' || pathname === '/confirm';
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname === '/register' ||
+    pathname === '/confirm' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password';
 
   if (isPublicRoute) {
     if (token) {
