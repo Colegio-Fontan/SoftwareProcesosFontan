@@ -439,7 +439,7 @@ function generateEmailHTML(
           <!-- Action Button -->
           <tr>
             <td style="padding: 0 30px 30px; text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/requests/my" 
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/requests/${processData.processId}" 
                  style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
                 Ver Proceso #${processData.processId}
               </a>

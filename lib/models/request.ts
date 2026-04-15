@@ -1,6 +1,7 @@
 import sql from '../db';
 import type { Request, CreateRequestInput, RequestType, RequestStatus, UserRole } from '@/types';
 import { UserModel } from './user';
+import { AttachmentModel } from './attachment';
 import { sendProcessAssignmentNotification, sendProcessResolutionNotification, sendProcessStatusUpdateNotification } from '../email';
 import { getUserById } from '../utils/get-users-by-role';
 
@@ -434,5 +435,17 @@ export class RequestModel {
     }
 
     return (await this.findById(requestId))!;
+  }
+
+  static async delete(id: number): Promise<void> {
+    // Eliminar archivos físicos y registros de adjuntos
+    const attachments = await AttachmentModel.findByRequestId(id);
+    for (const attachment of attachments) {
+      await AttachmentModel.delete(attachment.id);
+    }
+    // Eliminar historial
+    await sql`DELETE FROM approval_history WHERE request_id = ${id}`;
+    // Eliminar la solicitud
+    await sql`DELETE FROM requests WHERE id = ${id}`;
   }
 }

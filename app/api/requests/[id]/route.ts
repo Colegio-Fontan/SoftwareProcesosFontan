@@ -122,3 +122,46 @@ export async function PATCH(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getAuthUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const requestId = parseInt(id);
+  const existingRequest = await RequestModel.findById(requestId);
+
+  if (!existingRequest) {
+    return NextResponse.json({ error: 'Solicitud no encontrada' }, { status: 404 });
+  }
+
+  const isOwner = existingRequest.user_id === user.id;
+  const isAdmin = user.role === 'admin';
+
+  // El dueño solo puede eliminar si nadie ha respondido aún (status pendiente)
+  if (isOwner && !isAdmin && existingRequest.status !== 'pendiente') {
+    return NextResponse.json(
+      { error: 'No puedes eliminar esta solicitud porque ya ha sido procesada por alguien.' },
+      { status: 403 }
+    );
+  }
+
+  if (!isOwner && !isAdmin) {
+    return NextResponse.json(
+      { error: 'No tienes permisos para eliminar esta solicitud' },
+      { status: 403 }
+    );
+  }
+
+  try {
+    await RequestModel.delete(requestId);
+    return NextResponse.json({ message: 'Solicitud eliminada correctamente' });
+  } catch {
+    return NextResponse.json({ error: 'Error al eliminar la solicitud' }, { status: 500 });
+  }
+}
+
