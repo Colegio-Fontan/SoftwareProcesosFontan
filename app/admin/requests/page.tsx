@@ -115,14 +115,18 @@ export default function AdminRequestsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
                 <div className="bg-gray-50 rounded-lg p-2 border border-gray-100">
                   <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">
-                    Responsable actual
+                    {req.status === 'aceptado' || req.status === 'rechazado' || req.status === 'resuelto' || req.status === 'cerrado'
+                      ? 'Cerrado por'
+                      : 'Responsable actual'}
                   </p>
                   <p className="text-sm font-semibold text-primary">
                     {req.assigned_to
                       ? `👤 ${req.assigned_to.name}`
                       : req.current_approver_role
                         ? `🏢 ${roleLabels[req.current_approver_role] || req.current_approver_role}`
-                        : 'Nadie (Finalizado)'
+                        : req.last_actor_name
+                          ? `✅ ${req.last_actor_name}`
+                          : '—'
                     }
                   </p>
                 </div>

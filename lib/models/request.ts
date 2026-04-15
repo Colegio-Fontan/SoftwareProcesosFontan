@@ -180,13 +180,25 @@ export class RequestModel {
 
   static async getAll(): Promise<Request[]> {
     const requests = await sql`
-      SELECT * FROM requests 
-      ORDER BY created_at DESC
-    ` as Request[];
+      SELECT r.*,
+             (SELECT u2.name FROM approval_history ah
+              JOIN users u2 ON ah.user_id = u2.id
+              WHERE ah.request_id = r.id
+              ORDER BY ah.created_at DESC LIMIT 1) as last_actor_name,
+             (SELECT u2.role FROM approval_history ah
+              JOIN users u2 ON ah.user_id = u2.id
+              WHERE ah.request_id = r.id
+              ORDER BY ah.created_at DESC LIMIT 1) as last_actor_role
+      FROM requests r
+      ORDER BY r.created_at DESC
+    ` as (Request & { last_actor_name: string | null; last_actor_role: string | null })[];
 
     const results = await Promise.all(requests.map(async req => {
       const user = await UserModel.findById(req.user_id);
-      return { ...req, user };
+      const assigned_to = req.assigned_to_user_id
+        ? await UserModel.findById(req.assigned_to_user_id)
+        : undefined;
+      return { ...req, user, assigned_to };
     }));
 
     return results as Request[];

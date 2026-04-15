@@ -46,6 +46,8 @@ export interface Request {
   assigned_to?: User;
   attachments?: Attachment[];
   history?: ApprovalHistory[];
+  last_actor_name?: string | null;
+  last_actor_role?: string | null;
 }
 
 export interface Attachment {
