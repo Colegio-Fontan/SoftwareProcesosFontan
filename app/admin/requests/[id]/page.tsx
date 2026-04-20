@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import type { Request, ApprovalHistory, Attachment } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { getAttachmentUrl } from '@/lib/storage';
 
 export default function AdminRequestDetailPage({
   params,
@@ -65,15 +66,16 @@ export default function AdminRequestDetailPage({
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {request.attachments.map((file: Attachment) => {
                   const isImage = file.mime_type.includes('image');
+                  const fileUrl = getAttachmentUrl(file);
                   return isImage ? (
                     <button
                       key={file.id}
-                      onClick={() => setLightboxImage(`/api/uploads/${file.filename}`)}
+                      onClick={() => setLightboxImage(fileUrl)}
                       className="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer bg-gray-100"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`/api/uploads/${file.filename}`}
+                        src={fileUrl}
                         alt={file.original_filename}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -88,7 +90,7 @@ export default function AdminRequestDetailPage({
                   ) : (
                     <a
                       key={file.id}
-                      href={`/api/uploads/${file.filename}`}
+                      href={fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary/30 transition-all group aspect-square"

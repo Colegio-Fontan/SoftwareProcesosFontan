@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RequestForm } from '@/components/requests/RequestForm';
 import { Card } from '@/components/ui/Card';
+import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
 import type { RequestType, CreateRequestInput } from '@/types';
 
 export default function NewRequestPage() {
@@ -58,15 +59,14 @@ export default function NewRequestPage() {
         return;
       }
 
-      // Subir archivos adjuntos si hay
+      // Subir archivos adjuntos si hay (directo a Vercel Blob)
       const attachedFiles = formData.getAll('files') as File[];
       for (const file of attachedFiles) {
-        const uploadData = new FormData();
-        uploadData.append('file', file);
-        await fetch(`/api/requests/${result.request.id}/attachments`, {
-          method: 'POST',
-          body: uploadData,
-        });
+        try {
+          await uploadRequestAttachment(result.request.id, file);
+        } catch (err) {
+          console.error('Error subiendo archivo:', file.name, err);
+        }
       }
 
       router.push(`/requests/${result.request.id}`);

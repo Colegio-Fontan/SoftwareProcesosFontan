@@ -29,12 +29,18 @@ yarn-error.log*
 # vercel
 .vercel
 
-# database
-*.db
-*.db-journal
-/database
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev artefacts (logs/reports generados por lint o build)
+/build*.txt
+/build*.log
+/lint*.txt
+/lint*.json
+/*_lint*.txt
+/*_report.*
+/*_results.*
+/eslint-output.txt
+/final-lint-out.txt
 

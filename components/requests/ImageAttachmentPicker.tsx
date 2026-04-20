@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import {
+  ACCEPTED_ATTACHMENT_MIME_TYPES,
+  MAX_ATTACHMENT_MB,
+} from '@/lib/storage';
 
 interface ImageAttachmentPickerProps {
   files: File[];
@@ -9,19 +13,14 @@ interface ImageAttachmentPickerProps {
   label?: string;
 }
 
-const ACCEPTED_TYPES = [
-  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
+const ACCEPTED_TYPES = ACCEPTED_ATTACHMENT_MIME_TYPES;
 
 const ACCEPTED_EXTENSIONS = '.jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx';
 
 export const ImageAttachmentPicker: React.FC<ImageAttachmentPickerProps> = ({
   files,
   onFilesChange,
-  maxFileSizeMB = 5,
+  maxFileSizeMB = MAX_ATTACHMENT_MB,
   label = 'Adjuntar imágenes o documentos (Opcional)',
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);

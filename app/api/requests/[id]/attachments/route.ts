@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getAuthUser } from '@/lib/auth';
 import { RequestModel } from '@/lib/models/request';
 import { AttachmentModel } from '@/lib/models/attachment';
-import { writeFile } from 'fs/promises';
-import path from 'path';
-import { randomUUID } from 'crypto';
+import { ACCEPTED_ATTACHMENT_MIME_TYPES, MAX_ATTACHMENT_MB } from '@/lib/storage';
+
+const attachmentSchema = z.object({
+  url: z.string().url(),
+  pathname: z.string().min(1),
+  original_filename: z.string().min(1),
+  mime_type: z.string().min(1),
+  size: z.number().int().nonnegative(),
+});
 
 export async function POST(
   request: NextRequest,
@@ -26,7 +33,7 @@ export async function POST(
     );
   }
 
-  // Verificar permisos: dueño o asignado actual
+  // Verificar permisos: dueño, asignado actual, responsable por rol, o admin
   const isOwner = existingRequest.user_id === user.id;
   const isAssigned = existingRequest.assigned_to_user_id === user.id;
   const isApproverRole = existingRequest.current_approver_role === user.role;
@@ -40,41 +47,45 @@ export async function POST(
   }
 
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const body = await request.json();
+    const data = attachmentSchema.parse(body);
 
-    if (!file) {
+    // Defensa en profundidad: validamos tipo y tamaño aunque el token del
+    // blob ya los filtre.
+    if (!ACCEPTED_ATTACHMENT_MIME_TYPES.includes(data.mime_type)) {
       return NextResponse.json(
-        { error: 'No se proporcionó archivo' },
+        { error: 'Tipo de archivo no permitido' },
+        { status: 400 }
+      );
+    }
+    if (data.size > MAX_ATTACHMENT_MB * 1024 * 1024) {
+      return NextResponse.json(
+        { error: `El archivo excede ${MAX_ATTACHMENT_MB}MB` },
         { status: 400 }
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const filename = `${randomUUID()}-${file.name}`;
-    const storagePath = AttachmentModel.getStoragePath();
-    const filePath = path.join(storagePath, filename);
-    const relativePath = path.join('uploads', filename);
-
-    await writeFile(filePath, buffer);
-
     const attachment = await AttachmentModel.create(
       requestId,
-      filename,
-      file.name,
-      file.type,
-      file.size,
-      relativePath
+      data.pathname,
+      data.original_filename,
+      data.mime_type,
+      data.size,
+      data.url
     );
 
     return NextResponse.json({ attachment }, { status: 201 });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Datos inválidos', details: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error('Error registrando adjunto:', error);
     return NextResponse.json(
-      { error: 'Error al subir archivo' },
+      { error: 'Error al registrar el archivo' },
       { status: 500 }
     );
   }
 }
-

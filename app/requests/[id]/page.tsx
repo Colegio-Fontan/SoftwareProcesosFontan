@@ -10,6 +10,8 @@ import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getAttachmentUrl } from '@/lib/storage';
+import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
 import type { Request, User, ApprovalHistory } from '@/types';
 
 const typeLabels: Record<string, string> = {
@@ -135,16 +137,7 @@ export default function RequestDetailPage({
     setEvidenceSuccess('');
     try {
       for (const file of newEvidenceFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch(`/api/requests/${requestId}/attachments`, {
-          method: 'POST',
-          body: formData,
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || `Error al subir ${file.name}`);
-        }
+        await uploadRequestAttachment(requestId, file);
       }
       setNewEvidenceFiles([]);
       setEvidenceSuccess(`${newEvidenceFiles.length} archivo(s) subido(s) correctamente.`);
@@ -330,15 +323,16 @@ export default function RequestDetailPage({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {request.attachments.map((file) => {
                   const isImage = file.mime_type.includes('image');
+                  const fileUrl = getAttachmentUrl(file);
                   return isImage ? (
                     <button
                       key={file.id}
-                      onClick={() => setLightboxImage(`/api/uploads/${file.filename}`)}
+                      onClick={() => setLightboxImage(fileUrl)}
                       className="group relative aspect-square rounded-xl overflow-hidden border border-gray-200 hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer bg-gray-100"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`/api/uploads/${file.filename}`}
+                        src={fileUrl}
                         alt={file.original_filename}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
@@ -353,7 +347,7 @@ export default function RequestDetailPage({
                   ) : (
                     <a
                       key={file.id}
-                      href={`/api/uploads/${file.filename}`}
+                      href={fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary/30 transition-all group aspect-square"

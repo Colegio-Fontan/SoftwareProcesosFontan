@@ -1,9 +1,18 @@
 import sql from '../db';
 import type { Attachment } from '@/types';
-import fs from 'fs';
-import path from 'path';
+import { del } from '@vercel/blob';
+import { isBlobUrl } from '@/lib/storage';
 
 export class AttachmentModel {
+  /**
+   * Crea un registro de adjunto.
+   *
+   * Con Vercel Blob:
+   *  - `filename` guarda el pathname/key dentro del Blob store (p.ej.
+   *    `requests/123/abc123-foto.jpg`). Sirve para operaciones administrativas.
+   *  - `filePath` guarda la URL pública completa del blob, que es la que se
+   *    usa para mostrar y descargar el archivo.
+   */
   static async create(
     requestId: number,
     filename: string,
@@ -35,30 +44,18 @@ export class AttachmentModel {
     const attachment = await this.findById(id);
     if (!attachment) return;
 
-    // Eliminar archivo físico (Nota: Esto fallará en Vercel, debería usar Blob storage)
-    const filePath = path.join(process.cwd(), attachment.path);
-    if (fs.existsSync(filePath)) {
+    // Borrar del Blob store si el path es una URL absoluta.
+    // Los registros legacy almacenados en el filesystem local (sólo dev) se
+    // ignoran: en producción no existían y en local se limpian con el propio
+    // sistema de archivos.
+    if (isBlobUrl(attachment.path)) {
       try {
-        fs.unlinkSync(filePath);
+        await del(attachment.path);
       } catch (err) {
-        console.error('Error deleting file:', err);
+        console.error('Error borrando blob:', err);
       }
     }
 
-    // Eliminar registro de BD
     await sql`DELETE FROM attachments WHERE id = ${id}`;
-  }
-
-  static getStoragePath(): string {
-    const storageDir = path.join(process.cwd(), 'uploads');
-    // En Vercel no se puede crear carpetas arbitrarias, pero lo dejamos para local
-    if (!fs.existsSync(storageDir) && process.env.NODE_ENV !== 'production') {
-      try {
-        fs.mkdirSync(storageDir, { recursive: true });
-      } catch (err) {
-        console.error('Error creating storage dir:', err);
-      }
-    }
-    return storageDir;
   }
 }

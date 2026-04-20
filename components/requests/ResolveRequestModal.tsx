@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { ImageAttachmentPicker } from './ImageAttachmentPicker';
+import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
 
 interface ResolveRequestModalProps {
   requestId: number;
@@ -27,17 +28,9 @@ export const ResolveRequestModal: React.FC<ResolveRequestModalProps> = ({
     setError('');
 
     try {
-      // 1. Subir archivos primero
+      // 1. Subir archivos primero (directo a Vercel Blob)
       for (const file of files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const uploadRes = await fetch(`/api/requests/${requestId}/attachments`, {
-          method: 'POST',
-          body: formData,
-        });
-        if (!uploadRes.ok) {
-          throw new Error(`Error al subir evidencia: ${file.name}`);
-        }
+        await uploadRequestAttachment(requestId, file);
       }
 
       // 2. Marcar como resuelto
