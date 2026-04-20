@@ -81,11 +81,27 @@ export async function POST(
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '_');
     const pathname = `requests/${requestId}/${Date.now()}-${safeName}`;
 
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error(
+        '[attachments] BLOB_READ_WRITE_TOKEN no está definido en el entorno'
+      );
+      return NextResponse.json(
+        { error: 'Almacenamiento de archivos no configurado' },
+        { status: 500 }
+      );
+    }
+
+    console.log(
+      `[attachments] subiendo a Blob request=${requestId} pathname=${pathname} size=${file.size} mime=${mimeType}`
+    );
+
     const blob = await put(pathname, file, {
       access: 'public',
       contentType: mimeType,
       addRandomSuffix: false,
     });
+
+    console.log(`[attachments] subida OK -> ${blob.url}`);
 
     const attachment = await AttachmentModel.create(
       requestId,

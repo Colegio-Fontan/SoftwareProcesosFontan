@@ -59,14 +59,24 @@ export default function NewRequestPage() {
         return;
       }
 
-      // Subir archivos adjuntos si hay (directo a Vercel Blob)
       const attachedFiles = formData.getAll('files') as File[];
+      const uploadErrors: string[] = [];
       for (const file of attachedFiles) {
         try {
           await uploadRequestAttachment(result.request.id, file);
         } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
           console.error('Error subiendo archivo:', file.name, err);
+          uploadErrors.push(`${file.name}: ${msg}`);
         }
+      }
+
+      if (uploadErrors.length > 0) {
+        setError(
+          `La solicitud se creó pero no se pudieron subir algunos archivos:\n` +
+            uploadErrors.join('\n')
+        );
+        return;
       }
 
       router.push(`/requests/${result.request.id}`);
