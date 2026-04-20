@@ -102,8 +102,8 @@ Otros scripts útiles en `scripts/`:
 procesos-fontan/
 ├── app/                    # App Router (Next.js)
 │   ├── api/                # Rutas API
-│   │   ├── uploads/        # Firma tokens de Vercel Blob (handleUpload)
-│   │   └── requests/[id]/attachments/   # Registra adjuntos en Neon
+│   │   ├── uploads/[filename]/          # Sirve archivos legacy almacenados en ./uploads
+│   │   └── requests/[id]/attachments/   # Sube archivo a Vercel Blob y lo registra en Neon
 │   └── ...
 ├── components/             # Componentes React
 ├── database/
@@ -121,13 +121,13 @@ procesos-fontan/
 
 ## Adjuntos e imágenes
 
-El flujo es **client upload** a Vercel Blob:
+El flujo es **server upload** a Vercel Blob:
 
-1. El navegador llama a `upload(...)` de `@vercel/blob/client` contra `/api/uploads`, que firma un token si hay sesión válida.
-2. El archivo se sube directo al Blob Store (sin pasar por nuestras funciones, por lo que no aplica el límite de 4.5 MB de las rutas API).
-3. El cliente envía los metadatos resultantes a `/api/requests/{id}/attachments`, que los persiste en Neon (`path` guarda la URL pública del blob).
+1. El navegador envía el archivo como `multipart/form-data` a `POST /api/requests/{id}/attachments`.
+2. El endpoint valida permisos/tipo/tamaño y llama a `put(...)` de `@vercel/blob` desde el servidor, subiendo el archivo al Blob Store.
+3. La ruta pública del blob se persiste en Neon junto al resto de metadatos del adjunto.
 
-El tamaño máximo por archivo se define en `lib/storage.ts` (`MAX_ATTACHMENT_MB`).
+El tamaño máximo por archivo se define en `lib/storage.ts` (`MAX_ATTACHMENT_MB`). Por defecto es 4 MB para respetar el límite de body de ~4.5 MB que Vercel aplica a las rutas API en el plan Hobby; en el plan Pro puede subirse este valor.
 
 ## Flujos de aprobación
 

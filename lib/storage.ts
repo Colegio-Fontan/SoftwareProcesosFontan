@@ -24,10 +24,12 @@ export function isBlobUrl(path: string | null | undefined): boolean {
 
 /**
  * Tamaño máximo permitido por archivo adjunto (MB).
- * Se usa tanto en cliente (ImageAttachmentPicker) como en servidor
- * (handleUpload de Vercel Blob).
+ *
+ * Nota: Las rutas API de Vercel limitan el body a ~4.5MB en el plan Hobby y
+ * a 50MB en Pro. Al subir por el servidor (/api/requests/[id]/attachments),
+ * nos quedamos debajo del límite del plan gratuito para máxima compatibilidad.
  */
-export const MAX_ATTACHMENT_MB = 10;
+export const MAX_ATTACHMENT_MB = 4;
 
 /**
  * Tipos MIME aceptados para los adjuntos.

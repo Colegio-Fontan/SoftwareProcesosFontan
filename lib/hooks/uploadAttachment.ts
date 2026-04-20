@@ -1,44 +1,53 @@
 'use client';
 
-import { upload } from '@vercel/blob/client';
+const UPLOAD_TIMEOUT_MS = 90_000;
 
 /**
- * Sube un archivo directamente al Vercel Blob Store usando la subida firmada
- * por el cliente (evita el límite de 4.5MB de las rutas API) y luego registra
- * el adjunto en la solicitud indicada.
- *
- * Lanza una excepción con un mensaje en español si algo falla.
+ * Sube un archivo al endpoint de adjuntos mediante `multipart/form-data`.
+ * El servidor se encarga de enviarlo al Blob Store y de registrar el adjunto
+ * en la base de datos. Si pasa {@link UPLOAD_TIMEOUT_MS} ms sin respuesta se
+ * aborta y se lanza un error legible en español.
  */
 export async function uploadRequestAttachment(
   requestId: number,
   file: File
 ): Promise<void> {
-  // Normalizamos el nombre para que el key del blob sea seguro en URLs.
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '_');
-  const pathname = `requests/${requestId}/${safeName}`;
+  const formData = new FormData();
+  formData.append('file', file);
 
-  // 1) Subida directa desde el navegador al Blob Store.
-  const blob = await upload(pathname, file, {
-    access: 'public',
-    handleUploadUrl: '/api/uploads',
-    contentType: file.type || undefined,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
-  // 2) Registrar el adjunto en nuestra base de datos.
-  const res = await fetch(`/api/requests/${requestId}/attachments`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      url: blob.url,
-      pathname: blob.pathname,
-      original_filename: file.name,
-      mime_type: file.type || 'application/octet-stream',
-      size: file.size,
-    }),
-  });
+  try {
+    const res = await fetch(`/api/requests/${requestId}/attachments`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || `Error al registrar ${file.name}`);
+    if (!res.ok) {
+      let errorMessage = `Error al subir ${file.name}`;
+      try {
+        const data = (await res.json()) as { error?: string };
+        if (data?.error) errorMessage = data.error;
+      } catch {
+        // ignore body parse errors
+      }
+      throw new Error(errorMessage);
+    }
+  } catch (err) {
+    console.error('[uploadAttachment] Fallo subiendo', file.name, err);
+
+    if (controller.signal.aborted) {
+      throw new Error(
+        `La subida de "${file.name}" superó ${UPLOAD_TIMEOUT_MS / 1000}s. ` +
+          'Revisa tu conexión o intenta de nuevo.'
+      );
+    }
+    throw err instanceof Error
+      ? err
+      : new Error(`Error al subir ${file.name}`);
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
