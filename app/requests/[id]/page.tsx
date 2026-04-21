@@ -12,7 +12,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAttachmentUrl } from '@/lib/storage';
 import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
-import type { Request, User, ApprovalHistory } from '@/types';
+import { Settings, Paperclip, CheckCircle, Search, File as FileIcon, Upload, AlertTriangle, Zap, Forward, Clock, Lock, Trash2, User, Building2 } from 'lucide-react';
+import type { Request, User as TypeUser, ApprovalHistory } from '@/types';
 
 const typeLabels: Record<string, string> = {
   compra: 'Compra/Materiales',
@@ -55,7 +56,7 @@ export default function RequestDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<TypeUser | null>(null);
   const [request, setRequest] = useState<Request | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForwardModal, setShowForwardModal] = useState(false);
@@ -190,7 +191,7 @@ export default function RequestDetailPage({
   // El creador NUNCA puede actuar sobre su propio proceso (solo ver y eliminar)
   const canApprove = !isOwner &&
     (isMyRole || isMyDirectAssignment || isAdmin || isUnassigned) &&
-    (request.status === 'pendiente' || request.status === 'en_proceso');
+    (request.status === 'pendiente' || request.status === 'en_proceso' || request.status === 'aceptado');
 
   // Puede subir evidencias: dueño, asignado actual, su rol es el actual, o admin — sin importar el estado
   const canUploadEvidence = isOwner || isMyDirectAssignment || isMyRole || isAdmin;
@@ -253,17 +254,13 @@ export default function RequestDetailPage({
                   <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-3">
                     <p className="font-bold text-secondary flex items-center gap-2">
                       {request.assigned_to
-                        ? <><span>👤</span> {request.assigned_to.name}</>
+                        ? <><User className="w-4 h-4 text-primary" /> {request.assigned_to.name}</>
                         : request.current_approver_role
-                          ? <><span>🏢</span> {roleLabels[request.current_approver_role] || request.current_approver_role}</>
-                          : <><span>✅</span> Finalizado</>
+                          ? <><Building2 className="w-4 h-4 text-primary" /> {roleLabels[request.current_approver_role] || request.current_approver_role}</>
+                          : <><CheckCircle className="w-4 h-4 text-green-500" /> Finalizado</>
                       }
                     </p>
-                    {request.custom_flow && (
-                      <p className="text-[10px] text-amber-600 font-medium mt-1 uppercase tracking-tight">
-                        ⚙️ Flujo Personalizado / Reenviado
-                      </p>
-                    )}
+
                   </div>
                 </div>
 
@@ -317,7 +314,7 @@ export default function RequestDetailPage({
           {request.attachments && request.attachments.length > 0 && (
             <Card>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                📎 Archivos y Evidencias
+                <Paperclip className="w-5 h-5 text-gray-500" /> Archivos y evidencias
                 <Badge variant="info">{request.attachments.length}</Badge>
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -337,7 +334,7 @@ export default function RequestDetailPage({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <span className="text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg">🔍</span>
+                        <Search className="text-white w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                       </div>
                       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                         <p className="text-xs text-white truncate font-medium">{file.original_filename}</p>
@@ -353,7 +350,7 @@ export default function RequestDetailPage({
                       className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-primary/30 transition-all group aspect-square"
                     >
                       <div className="bg-primary/5 p-3 rounded-lg group-hover:bg-primary/10 transition-colors mb-2">
-                        <span className="text-3xl">📄</span>
+                        <FileIcon className="w-8 h-8 text-primary/70" />
                       </div>
                       <p className="text-xs font-medium text-gray-700 truncate max-w-full">{file.original_filename}</p>
                       <p className="text-[10px] text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
@@ -367,7 +364,7 @@ export default function RequestDetailPage({
           {canUploadEvidence && (
             <Card>
               <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
-                📤 Agregar Evidencias
+                <Upload className="w-5 h-5 text-gray-500" /> Agregar evidencias
               </h2>
               <p className="text-xs text-gray-400 mb-4">
                 Puedes adjuntar documentos o imágenes en cualquier momento, incluso si el proceso ya está cerrado.
@@ -380,13 +377,13 @@ export default function RequestDetailPage({
               />
 
               {evidenceError && (
-                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-3">
-                  ⚠️ {evidenceError}
+                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-3 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4" /> {evidenceError}
                 </p>
               )}
               {evidenceSuccess && (
-                <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mt-3">
-                  ✅ {evidenceSuccess}
+                <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mt-3 flex items-center gap-1.5">
+                  <CheckCircle className="w-4 h-4" /> {evidenceSuccess}
                 </p>
               )}
 
@@ -409,7 +406,7 @@ export default function RequestDetailPage({
           <Card className={canApprove ? 'border-2 border-primary/20 shadow-lg' : ''}>
             {debugInfo}
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              ⚡ Acciones
+              <Zap className="w-5 h-5 text-yellow-500" /> Acciones
               {canApprove && <Badge variant="info">Tu turno</Badge>}
             </h2>
 

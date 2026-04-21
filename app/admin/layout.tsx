@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ClipboardList, Users } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -12,8 +13,8 @@ export default function AdminLayout({
   const pathname = usePathname();
 
   const navItems = [
-    { name: '📋 Solicitudes', href: '/admin/requests' },
-    { name: '👥 Usuarios', href: '/admin/users' },
+    { name: 'Solicitudes', href: '/admin/requests', icon: <ClipboardList className="w-4 h-4 mr-2 inline-block" /> },
+    { name: 'Usuarios', href: '/admin/users', icon: <Users className="w-4 h-4 mr-2 inline-block" /> },
   ];
 
   return (
@@ -35,6 +36,7 @@ export default function AdminLayout({
                     }
                   `}
                 >
+                  {item.icon}
                   {item.name}
                 </Link>
               );

@@ -9,6 +9,7 @@ import { Select } from '@/components/ui/Select';
 import type { Request } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { User, Building2, CheckCircle } from 'lucide-react';
 
 export default function AdminRequestsPage() {
   const router = useRouter();
@@ -121,11 +122,11 @@ export default function AdminRequestsPage() {
                   </p>
                   <p className="text-sm font-semibold text-primary">
                     {req.assigned_to
-                      ? `👤 ${req.assigned_to.name}`
+                      ? <><User className="inline-block w-4 h-4 mr-1" /> {req.assigned_to.name}</>
                       : req.current_approver_role
-                        ? `🏢 ${roleLabels[req.current_approver_role] || req.current_approver_role}`
+                        ? <><Building2 className="inline-block w-4 h-4 mr-1" /> {roleLabels[req.current_approver_role] || req.current_approver_role}</>
                         : req.last_actor_name
-                          ? `✅ ${req.last_actor_name}`
+                          ? <><CheckCircle className="inline-block w-4 h-4 mr-1" /> {req.last_actor_name}</>
                           : '—'
                     }
                   </p>

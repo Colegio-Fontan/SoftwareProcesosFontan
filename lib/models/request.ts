@@ -96,14 +96,19 @@ export class RequestModel {
     const requests = await sql`
       SELECT * FROM requests 
       WHERE current_approver_role = ${role} 
-      AND status IN ('pendiente', 'en_proceso')
       ORDER BY 
+        CASE status
+          WHEN 'pendiente' THEN 1
+          WHEN 'en_proceso' THEN 1
+          WHEN 'aceptado' THEN 2
+          ELSE 3
+        END,
         CASE urgency
           WHEN 'alto' THEN 1
           WHEN 'medio' THEN 2
           WHEN 'bajo' THEN 3
         END,
-        created_at ASC
+        created_at DESC
     ` as Request[];
 
     const results = await Promise.all(requests.map(async req => {
@@ -121,14 +126,19 @@ export class RequestModel {
     const requests = await sql`
       SELECT * FROM requests 
       WHERE assigned_to_user_id = ${userId} 
-      AND status IN ('pendiente', 'en_proceso')
       ORDER BY 
+        CASE status
+          WHEN 'pendiente' THEN 1
+          WHEN 'en_proceso' THEN 1
+          WHEN 'aceptado' THEN 2
+          ELSE 3
+        END,
         CASE urgency
           WHEN 'alto' THEN 1
           WHEN 'medio' THEN 2
           WHEN 'bajo' THEN 3
         END,
-        created_at ASC
+        created_at DESC
     ` as Request[];
 
     const results = await Promise.all(requests.map(async req => {
@@ -149,12 +159,18 @@ export class RequestModel {
           AND status IN ('pendiente', 'en_proceso')
           AND user_id != ${excludeUserId}
           ORDER BY 
+            CASE status
+              WHEN 'pendiente' THEN 1
+              WHEN 'en_proceso' THEN 1
+              WHEN 'aceptado' THEN 2
+              ELSE 3
+            END,
             CASE urgency
               WHEN 'alto' THEN 1
               WHEN 'medio' THEN 2
               WHEN 'bajo' THEN 3
             END,
-            created_at ASC
+            created_at DESC
         `
       : await sql`
           SELECT * FROM requests 
@@ -162,12 +178,18 @@ export class RequestModel {
           AND assigned_to_user_id IS NULL
           AND status IN ('pendiente', 'en_proceso')
           ORDER BY 
+            CASE status
+              WHEN 'pendiente' THEN 1
+              WHEN 'en_proceso' THEN 1
+              WHEN 'aceptado' THEN 2
+              ELSE 3
+            END,
             CASE urgency
               WHEN 'alto' THEN 1
               WHEN 'medio' THEN 2
               WHEN 'bajo' THEN 3
             END,
-            created_at ASC
+            created_at DESC
         `;
 
     const results = await Promise.all((requests as Request[]).map(async req => {
@@ -216,11 +238,13 @@ export class RequestModel {
 
     const previousStatus = request.status;
     let newApproverRole: UserRole | null = request.current_approver_role || null;
+    let newAssignedToUserId: number | null = request.assigned_to_user_id || null;
     let newStatus = status;
 
     if (status === 'aceptado') {
       newApproverRole = null;
       newStatus = 'aceptado';
+      newAssignedToUserId = userId; // Asignar al usuario que recibe el proceso
     }
 
     if (status === 'resuelto' || status === 'cerrado' || status === 'rechazado') {
@@ -230,13 +254,13 @@ export class RequestModel {
     if (status === 'aceptado' && expectedResponseDate) {
       await sql`
         UPDATE requests 
-        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, expected_response_date = ${expectedResponseDate}, updated_at = CURRENT_TIMESTAMP
+        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, assigned_to_user_id = ${newAssignedToUserId}, expected_response_date = ${expectedResponseDate}, updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
       `;
     } else {
       await sql`
         UPDATE requests 
-        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, updated_at = CURRENT_TIMESTAMP
+        SET status = ${newStatus}, current_approver_role = ${newApproverRole}, assigned_to_user_id = ${newAssignedToUserId}, updated_at = CURRENT_TIMESTAMP
         WHERE id = ${id}
       `;
     }
