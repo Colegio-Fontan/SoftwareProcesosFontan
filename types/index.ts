@@ -38,7 +38,6 @@ export interface Request {
   current_approver_role?: UserRole | null;
   assigned_to_user_id?: number | null;
   custom_flow?: boolean;
-  expected_response_date?: string | null;
   last_comment?: string | null;
   created_at: string;
   updated_at: string;
@@ -86,7 +85,6 @@ export interface CreateRequestInput {
   urgency?: UrgencyLevel;
   assigned_to_user_id?: number | null;
   custom_flow?: boolean;
-  expected_response_date?: string | null;
 }
 
 export interface UpdateRequestInput {

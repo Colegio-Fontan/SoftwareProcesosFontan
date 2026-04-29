@@ -34,7 +34,6 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     description: '',
     reason: '',
     urgency: 'medio' as UrgencyLevel,
-    expected_response_date: '',
   });
 
   const [files, setFiles] = useState<File[]>([]);
@@ -52,10 +51,6 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     data.append('description', formData.description);
     if (formData.reason) data.append('reason', formData.reason);
     data.append('urgency', formData.urgency);
-    if (formData.expected_response_date) {
-      data.append('expected_response_date', formData.expected_response_date);
-    }
-
     // Agregar archivos adjuntos
     files.forEach((file) => {
       data.append('files', file);
@@ -111,14 +106,6 @@ export const RequestForm: React.FC<RequestFormProps> = ({
           { value: 'medio', label: 'Medio' },
           { value: 'alto', label: 'Alto' },
         ]}
-      />
-
-      <Input
-        label="Fecha esperada de respuesta (Opcional)"
-        type="date"
-        value={formData.expected_response_date}
-        onChange={(e) => setFormData({ ...formData, expected_response_date: e.target.value })}
-        min={new Date().toISOString().split('T')[0]}
       />
 
       {/* Adjuntos opcionales */}

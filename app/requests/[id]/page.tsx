@@ -270,16 +270,6 @@ export default function RequestDetailPage({
                   </p>
                 </div>
 
-                {request.expected_response_date && (
-                  <div className="md:col-span-2 pt-2 border-t mt-2">
-                    <p className="text-xs text-amber-600 font-bold uppercase tracking-wider mb-1">
-                      📅 Fecha esperada de respuesta
-                    </p>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {format(new Date(request.expected_response_date), "d 'de' MMMM, yyyy")}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </Card>

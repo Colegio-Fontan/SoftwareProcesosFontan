@@ -7,7 +7,6 @@ import { z } from 'zod';
 const updateRequestSchema = z.object({
   status: z.enum(['pendiente', 'en_proceso', 'aceptado', 'rechazado', 'resuelto', 'cerrado']).optional(),
   comment: z.string().optional(),
-  expected_response_date: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -47,7 +46,6 @@ export async function GET(
       current_approver_role: requestData.current_approver_role,
       assigned_to_user_id: requestData.assigned_to_user_id,
       custom_flow: requestData.custom_flow,
-      expected_response_date: requestData.expected_response_date,
       created_at: requestData.created_at,
       updated_at: requestData.updated_at,
       user: requestData.user,
@@ -100,8 +98,7 @@ export async function PATCH(
         requestId,
         data.status,
         user.id,
-        data.comment,
-        data.expected_response_date || undefined
+        data.comment
       );
 
       return NextResponse.json({ request: updatedRequest });

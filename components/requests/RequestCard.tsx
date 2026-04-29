@@ -5,9 +5,8 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import type { Request } from '@/types';
-import { format, isPast, isToday, isTomorrow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Settings, Paperclip, CheckCircle, XCircle, User, Building2, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { Paperclip, CheckCircle, XCircle, User, Building2 } from 'lucide-react';
 
 interface RequestCardProps {
   request: Request;
@@ -64,40 +63,6 @@ const urgencyVariants: Record<string, 'default' | 'warning' | 'danger'> = {
 };
 
 export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
-  const getExpectedDateInfo = () => {
-    if (!request.expected_response_date) return null;
-
-    const date = new Date(request.expected_response_date);
-    const isOverdue = isPast(date) && !isToday(date);
-    const isUrgent = isToday(date) || isTomorrow(date);
-
-    let colorClass = 'text-gray-500 bg-gray-50 border-gray-100';
-    let icon = <Calendar className="w-3 h-3" />;
-    let label = 'Esperado para:';
-
-    if (request.status === 'resuelto' || request.status === 'aceptado' || request.status === 'rechazado' || request.status === 'cerrado') {
-      colorClass = 'text-gray-400 bg-gray-50 border-gray-100 opacity-60';
-      label = 'Fue esperado:';
-    } else if (isOverdue) {
-      colorClass = 'text-red-700 bg-red-50 border-red-100 font-bold animate-pulse';
-      icon = <AlertTriangle className="w-3 h-3" />;
-      label = 'VENCIDO:';
-    } else if (isUrgent) {
-      colorClass = 'text-amber-700 bg-amber-50 border-amber-100 font-semibold';
-      icon = <Clock className="w-3 h-3" />;
-      label = 'Por vencer:';
-    }
-
-    return {
-      formattedDate: format(date, "d 'de' MMMM", { locale: es }),
-      colorClass,
-      icon,
-      label
-    };
-  };
-
-  const dateInfo = getExpectedDateInfo();
-
   return (
     <Link href={`/requests/${request.id}`}>
       <Card hover className="cursor-pointer">
@@ -149,13 +114,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
             </span>
           </div>
 
-          {dateInfo && (
-            <div className={`mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs ${dateInfo.colorClass}`}>
-              <span>{dateInfo.icon}</span>
-              <span className="uppercase tracking-wider font-bold text-[9px] opacity-70">{dateInfo.label}</span>
-              <span className="flex-1">{dateInfo.formattedDate}</span>
-            </div>
-          )}
           {/* Veredicto de respuesta */}
           {(request.status === 'aceptado' || request.status === 'rechazado' || request.status === 'resuelto') && request.last_comment && (
             <div className="mt-2 text-xs text-gray-600 italic border-t border-gray-200 pt-2">

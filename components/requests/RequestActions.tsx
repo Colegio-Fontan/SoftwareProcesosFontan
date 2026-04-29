@@ -19,8 +19,6 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
 }) => {
   const router = useRouter();
   const [comment, setComment] = useState('');
-  const [expectedDate, setExpectedDate] = useState('');
-  const [dateError, setDateError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [successInfo, setSuccessInfo] = useState<{ status: string, nextRole?: string } | null>(null);
@@ -36,15 +34,8 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
   };
 
   const handleAction = async (status: RequestStatus) => {
-    if (status === 'aceptado' && !expectedDate) {
-      setDateError(true);
-      setError('Debes seleccionar una fecha estimada de respuesta');
-      return;
-    }
-
     setIsLoading(true);
     setError('');
-    setDateError(false);
 
     try {
       const res = await fetch(`/api/requests/${requestId}`, {
@@ -53,7 +44,6 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
         body: JSON.stringify({
           status,
           comment: comment || undefined,
-          expected_response_date: status === 'aceptado' ? expectedDate : undefined,
         }),
       });
 
@@ -70,7 +60,6 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
       });
 
       setComment('');
-      setExpectedDate('');
       // router.refresh(); // Dejamos que el usuario vea el mensaje de éxito un momento antes de refrescar o si prefiere recargar manual
       setTimeout(() => {
         router.refresh();
@@ -95,9 +84,6 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
     );
   }
 
-  // Obtenemos la fecha mínima (hoy) para el input date
-  const todayStr = new Date().toISOString().split('T')[0];
-
   return (
     <div className="space-y-5">
       {error && (
@@ -108,29 +94,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
       )}
 
       <div className="space-y-4">
-        {currentStatus !== 'aceptado' && (
         <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-          <label className="block text-sm font-semibold text-gray-800 mb-1.5 flex items-center justify-between">
-            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> Fecha Estimada de Respuesta <span className="text-red-500">*</span></span>
-            <span className="text-[10px] text-amber-700 font-normal uppercase tracking-wider bg-amber-100 px-2 py-0.5 rounded-full">Para Recibir</span>
-          </label>
-          <input
-            type="date"
-            min={todayStr}
-            value={expectedDate}
-            onChange={(e) => { setExpectedDate(e.target.value); setDateError(false); setError(''); }}
-            className={`w-full rounded-lg border bg-white px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 ${dateError
-              ? 'border-red-500 focus:border-red-500 focus:ring-red-200 bg-red-50/30'
-              : 'border-gray-200 focus:border-primary focus:ring-primary/20'
-              }`}
-            required
-            aria-required="true"
-          />
-          {dateError && <p className="text-xs text-red-600 mt-1">Obligatorio para la acción &quot;Recibido&quot;.</p>}
-        </div>
-        )}
-
-        <div>
           <Textarea
             label="Comentario adicional (opcional)"
             value={comment}
@@ -149,7 +113,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
           onClick={() => handleAction('aceptado')}
           isLoading={isLoading}
           disabled={!!successInfo}
-          className={`flex-1 ${dateError ? 'border-red-300 shadow-[0_0_0_2px_rgba(239,68,68,0.2)]' : 'border-none relative bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95'} py-6 h-auto flex flex-col items-center justify-center gap-2 rounded-xl`}
+          className="flex-1 border-none relative bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95 py-6 h-auto flex flex-col items-center justify-center gap-2 rounded-xl"
         >
           <span className="font-bold text-lg flex items-center gap-2"><ThumbsUp className="w-5 h-5" /> Recibir</span>
           <span className="text-[9px] uppercase font-bold opacity-90 tracking-widest bg-black/10 px-2 py-0.5 rounded-full">Asignar y tomar</span>

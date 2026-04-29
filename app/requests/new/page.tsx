@@ -34,12 +34,6 @@ export default function NewRequestPage() {
         urgency: (formData.get('urgency') as 'bajo' | 'medio' | 'alto') || 'bajo',
       };
 
-      // Agregar fecha esperada de respuesta si se proporcionó
-      const expectedDate = formData.get('expected_response_date') as string;
-      if (expectedDate) {
-        data.expected_response_date = expectedDate;
-      }
-
       // Agregar destinatario si está especificado
       if (formData.get('assigned_to_user_id')) {
         data.assigned_to_user_id = parseInt(formData.get('assigned_to_user_id') as string);

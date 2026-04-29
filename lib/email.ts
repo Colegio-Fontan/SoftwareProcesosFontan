@@ -188,7 +188,7 @@ export async function sendProcessResolutionNotification(
  */
 export async function sendProcessStatusUpdateNotification(
   recipientUser: User,
-  processData: ProcessNotificationData & { newStatus: string; statusComment?: string; updatedBy?: { name: string; role?: string }; expectedDate?: string },
+  processData: ProcessNotificationData & { newStatus: string; statusComment?: string; updatedBy?: { name: string; role?: string } },
   isForwardAction = false
 ): Promise<boolean> {
   try {
@@ -222,9 +222,6 @@ export async function sendProcessStatusUpdateNotification(
       gradient = 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)';
       statusDisplay = 'REENVIADO';
     }
-
-    const formatter = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long' });
-    const formattedDate = processData.expectedDate ? formatter.format(new Date(processData.expectedDate)) : null;
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -263,14 +260,6 @@ export async function sendProcessStatusUpdateNotification(
           <tr>
             <td style="padding: 0 30px 30px;">
               <div style="background-color: #f9fafb; border-left: 4px solid #9ca3af; border-radius: 4px; padding: 20px;">
-                ${formattedDate ? `
-                <div style="margin-bottom: 15px;">
-                  <h2 style="margin: 0 0 5px; font-size: 16px; color: #111827;">📅 Fecha Estimada de Respuesta:</h2>
-                  <p style="margin: 0; font-size: 15px; color: #374151; font-weight: 600;">
-                    ${formattedDate}
-                  </p>
-                </div>
-                ` : ''}
                 <div>
                   <h2 style="margin: 0 0 10px; font-size: 16px; color: #111827;">Comentario:</h2>
                   <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6; font-style: italic;">

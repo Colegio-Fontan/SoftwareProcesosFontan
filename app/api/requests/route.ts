@@ -12,7 +12,6 @@ const createRequestSchema = z.object({
   assigned_to_user_id: z.number().optional().nullable(),
   // assigned_to_role removed
   custom_flow: z.boolean().optional(),
-  expected_response_date: z.string().optional().nullable(),
 });
 
 export async function GET(request: NextRequest) {
