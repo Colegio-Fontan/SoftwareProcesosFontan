@@ -24,6 +24,12 @@ export interface User {
   is_confirmed: number;
   created_at: string;
   updated_at: string;
+  cedula?: string | null;
+  cargo?: string | null;
+  area?: string | null;
+  salario?: number | null;
+  fecha_ingreso?: string | null;
+  can_access_ausentismo?: boolean | null;
 }
 
 export interface Request {
@@ -47,6 +53,14 @@ export interface Request {
   history?: ApprovalHistory[];
   last_actor_name?: string | null;
   last_actor_role?: string | null;
+  // Campos de ausencia (solo type='permiso')
+  tipo_ausencia?: string | null;
+  concepto_ausencia?: string | null;
+  fecha_ausencia?: string | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  horas_ausencia?: number | null;
+  dias_decimal?: number | null;
 }
 
 export interface Attachment {
@@ -85,6 +99,14 @@ export interface CreateRequestInput {
   urgency?: UrgencyLevel;
   assigned_to_user_id?: number | null;
   custom_flow?: boolean;
+  // Campos de ausencia (solo type='permiso')
+  tipo_ausencia?: string | null;
+  concepto_ausencia?: string | null;
+  fecha_ausencia?: string | null;
+  hora_inicio?: string | null;
+  hora_fin?: string | null;
+  horas_ausencia?: number | null;
+  dias_decimal?: number | null;
 }
 
 export interface UpdateRequestInput {

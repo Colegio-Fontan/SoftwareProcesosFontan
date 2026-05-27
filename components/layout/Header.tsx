@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import type { User } from '@/types';
 import Image from 'next/image';
-import { Home, ClipboardList, Bell, LayoutDashboard, LogOut } from 'lucide-react';
+import { Home, ClipboardList, Bell, LayoutDashboard, LogOut, BarChart2 } from 'lucide-react';
 
 interface HeaderProps {
   user: User | null;
@@ -63,6 +63,12 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                 {['gerencia', 'rectoria', 'admin'].includes(user.role) && (
                   <Link href="/admin/requests" className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-2">
                     <LayoutDashboard className="w-4 h-4" /> Panel admin
+                  </Link>
+                )}
+
+                {user.can_access_ausentismo && (
+                  <Link href="/ausentismo" className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors font-semibold flex items-center gap-2">
+                    <BarChart2 className="w-4 h-4" /> Ausentismo
                   </Link>
                 )}
 

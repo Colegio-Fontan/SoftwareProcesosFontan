@@ -10,8 +10,12 @@ const createRequestSchema = z.object({
   reason: z.string().optional(),
   urgency: z.enum(['bajo', 'medio', 'alto']).optional(),
   assigned_to_user_id: z.number().optional().nullable(),
-  // assigned_to_role removed
   custom_flow: z.boolean().optional(),
+  tipo_ausencia: z.string().optional().nullable(),
+  concepto_ausencia: z.string().optional().nullable(),
+  fecha_ausencia: z.string().optional().nullable(),
+  hora_inicio: z.string().optional().nullable(),
+  hora_fin: z.string().optional().nullable(),
 });
 
 export async function GET(request: NextRequest) {

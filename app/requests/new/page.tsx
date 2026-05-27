@@ -29,10 +29,19 @@ export default function NewRequestPage() {
       const data: CreateRequestInput = {
         type: type,
         title: formData.get('title') as string,
-        description: formData.get('description') as string,
+        description: (formData.get('description') as string) || ' ',
         reason: (formData.get('reason') as string) || undefined,
         urgency: (formData.get('urgency') as 'bajo' | 'medio' | 'alto') || 'bajo',
       };
+
+      // Campos de ausencia para permisos
+      if (type === 'permiso') {
+        data.tipo_ausencia = (formData.get('tipo_ausencia') as string) || null;
+        data.concepto_ausencia = (formData.get('concepto_ausencia') as string) || null;
+        data.fecha_ausencia = (formData.get('fecha_ausencia') as string) || null;
+        data.hora_inicio = (formData.get('hora_inicio') as string) || null;
+        data.hora_fin = (formData.get('hora_fin') as string) || null;
+      }
 
       // Agregar destinatario si está especificado
       if (formData.get('assigned_to_user_id')) {

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Informe de Avance — Procesos Fontán</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 48px 60px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Encabezado */
+    .label-top {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 3px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 28px 0;
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+
+    p {
+      color: #374151;
+      margin-bottom: 10px;
+    }
+
+    /* Estadísticas */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+
+    .stat-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
+      display: block;
+    }
+
+    .stat-value.success { color: #16a34a; }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Callout */
+    .callout {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 12px 0;
+    }
+
+    .callout.success {
+      background: #f0fdf4;
+      border-left: 3px solid #16a34a;
+    }
+
+    .callout.info {
+      background: #eff6ff;
+      border-left: 3px solid #2563eb;
+    }
+
+    .callout-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .callout.success .callout-title { color: #15803d; }
+    .callout.info .callout-title { color: #1d4ed8; }
+
+    .callout p {
+      font-size: 13px;
+      color: #374151;
+      margin: 0;
+    }
+
+    /* Tabla */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 8px 12px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      color: #374151;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+
+    tbody tr.warning td { background: #fffbeb; }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge.success { background: #dcfce7; color: #15803d; }
+    .badge.warning { background: #fef9c3; color: #a16207; }
+
+    /* Cards dos columnas */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 10px 16px;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .card-body {
+      padding: 14px 16px;
+    }
+
+    .card-body p { font-size: 13px; margin-bottom: 8px; }
+    .card-body p:last-child { margin-bottom: 0; }
+
+    .text-secondary {
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    /* Footer */
+    .footer {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    /* Print */
+    @media print {
+      body { padding: 24px 32px; }
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+      .two-col { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="label-top">Informe de Avance — Proyecto de Validación de Prácticas</div>
+  <h1>Procesos Fontán</h1>
+  <p class="subtitle">Plataforma de Gestión de Solicitudes y Procesos Institucionales · Colegio Fontán</p>
+  <div class="pills">
+    <span class="pill">Pedro Saldarriaga</span>
+    <span class="pill">Ingeniería de Sistemas — 9° Semestre</span>
+    <span class="pill">Líder de Tecnología</span>
+  </div>
+
+  <hr />
+
+  <h2>Indicadores de Impacto</h2>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-value success">99.9%</span>
+      <span class="stat-label">Disponibilidad del sistema</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">70+</span>
+      <span class="stat-label">Personas en presentación oficial</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">15+</span>
+      <span class="stat-label">Equipo administrativo capacitado</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value success">100%</span>
+      <span class="stat-label">Bugs reportados resueltos</span>
+    </div>
+  </div>
+
+  <hr />
+
+  <h2>Estado General del Proyecto</h2>
+  <p>
+    El sistema Procesos Fontán se encuentra en producción y en uso continuo por parte del personal del Colegio Fontán. La plataforma opera con una disponibilidad del <strong>99.9%</strong>, habiendo superado la etapa de desarrollo inicial y consolidándose como una herramienta de uso diario dentro de la institución.
+  </p>
+  <p>
+    Todos los módulos definidos en el alcance original han sido implementados: registro de solicitudes por categoría (compras, permisos, soporte técnico, certificados, mantenimiento y solicitudes personalizadas), flujos de aprobación jerárquicos, historial de proceso, sistema de notificaciones por correo electrónico y módulo de adjuntos.
+  </p>
+  <div class="callout success">
+    <div class="callout-title">Sistema activo en producción</div>
+    <p>La plataforma se usa durante toda la jornada escolar, todos los días hábiles. Los procesos que antes se gestionaban por correo o mensajes informales ahora se tramitan directamente a través del sistema, con trazabilidad completa.</p>
+  </div>
+
+  <hr />
+
+  <h2>Hitos Alcanzados</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Hito</th>
+        <th>Descripción</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Desarrollo e implementación inicial</strong></td>
+        <td>Plataforma funcional con flujos de solicitud, aprobación y notificaciones por correo.</td>
+        <td><span class="badge success">Completado</span></td>
+      </tr>
+      <tr>
+        <td><strong>Capacitación equipo administrativo</strong></td>
+        <td>Presentación y entrenamiento al equipo administrativo (15+ personas) previo al lanzamiento general.</td>
+        <td><span class="badge success">Completado</span></td>
+      </tr>
+      <tr>
+        <td><strong>Lanzamiento institucional</strong></td>
+        <td>Presentación formal a más de 70 personas del colegio, incluyendo docentes, directivos y personal de apoyo.</td>
+        <td><span class="badge success">Completado</span></td>
+      </tr>
+      <tr>
+        <td><strong>Rediseño de interfaz</strong></td>
+        <td>Modernización completa del frontend: nuevo sistema visual, iconografía vectorial, tarjetas rediseñadas y experiencia de usuario mejorada.</td>
+        <td><span class="badge success">Completado</span></td>
+      </tr>
+      <tr>
+        <td><strong>Resolución de bugs reportados</strong></td>
+        <td>Todos los errores identificados en producción han sido corregidos en el ciclo de desarrollo continuo.</td>
+        <td><span class="badge success">Completado</span></td>
+      </tr>
+      <tr class="warning">
+        <td><strong>Expansión de módulos</strong></td>
+        <td>Solicitudes de integración de informes de ausentismo y convivencia estudiantil.</td>
+        <td><span class="badge warning">En desarrollo</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr />
+
+  <h2>Dificultades y Aprendizajes</h2>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">Principal dificultad técnica</div>
+      <div class="card-body">
+        <p>
+          La mayor complejidad técnica estuvo en el diseño e implementación de la <strong>lógica de envío y reenvío de solicitudes</strong>. Modelar correctamente los flujos jerárquicos —donde una solicitud puede ser aceptada, redirigida a otro rol, rechazada o resuelta en distintos puntos del ciclo— requirió varias iteraciones de diseño y refactorización del modelo de datos y la capa de negocio.
+        </p>
+        <p class="text-secondary">
+          Superada mediante un sistema de historial de aprobaciones y una tabla de estados que permite representar cualquier combinación de flujo.
+        </p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Rediseño de interfaz (hace 2 semanas)</div>
+      <div class="card-body">
+        <p>
+          Se realizó una refactorización completa del frontend. Los objetivos fueron mejorar la estética general, reemplazar emojis por iconografía vectorial (lucide-react), rediseñar las tarjetas de solicitud, modernizar los botones de acción y mejorar la legibilidad del historial y los estados de los procesos.
+        </p>
+        <p class="text-secondary">
+          El rediseño fue bien recibido por los usuarios, quienes reportaron mayor claridad visual en la gestión de sus solicitudes.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <h2>Crecimiento y Proyección</h2>
+  <p>
+    El sistema Procesos Fontán se está consolidando como uno de los <strong>núcleos tecnológicos del colegio</strong>. La adopción orgánica por parte del personal ha generado demanda de nuevas integraciones, lo que evidencia el valor percibido de la plataforma dentro de la institución.
+  </p>
+  <h3>Integraciones solicitadas</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Módulo solicitado</th>
+        <th>Descripción</th>
+        <th>Tipo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Informes de Ausentismo</strong></td>
+        <td>Registro, seguimiento y generación de reportes sobre ausencias del personal y estudiantes.</td>
+        <td>Nueva funcionalidad</td>
+      </tr>
+      <tr>
+        <td><strong>Informes de Convivencia Estudiantil</strong></td>
+        <td>Gestión de incidentes disciplinarios, seguimiento de casos y documentación de acuerdos.</td>
+        <td>Nueva funcionalidad</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout info" style="margin-top: 16px;">
+    <div class="callout-title">El proyecto trasciende su alcance original</div>
+    <p>Lo que inició como un sistema de gestión de solicitudes administrativas está evolucionando hacia una plataforma institucional integral. Cada nueva solicitud de integración confirma que la arquitectura base fue diseñada con solidez suficiente para escalar.</p>
+  </div>
+
+  <hr />
+
+  <h2>Conclusión</h2>
+  <p>
+    El proyecto Procesos Fontán cumple y supera los objetivos planteados en la propuesta de validación de prácticas. La plataforma está en producción, es utilizada diariamente por toda la comunidad institucional y ha demostrado ser estable, confiable y adaptable. La experiencia de desarrollo ha permitido aplicar conocimientos de ingeniería de software en un entorno real, resolver problemas complejos de diseño de sistemas y liderar la transformación digital de una institución educativa de manera tangible y medible.
+  </p>
+  <p class="footer">Informe generado: Mayo 2026 · Pedro Saldarriaga · Colegio Fontán</p>
+
+</body>
+</html>

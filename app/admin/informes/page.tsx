@@ -1,0 +1,348 @@
+'use client';
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { Users, Calendar, User } from 'lucide-react';
+
+const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+type Tab = 'consolidado' | 'mensual' | 'personal';
+
+interface EmpleadoConsolidado {
+  id: number;
+  name: string;
+  cedula: string | null;
+  cargo: string | null;
+  area: string | null;
+  salario: number | null;
+  total_dias_ausencia: number;
+  costo_ausencias_anio: number;
+}
+
+interface MesData {
+  mes: number;
+  dias_laborales: number;
+  num_empleados: number;
+  dias_laborables_totales: number;
+  total_dias_ausencia: number;
+}
+
+interface AusenciaRow {
+  id: number;
+  user_id: number;
+  empleado_nombre: string;
+  cedula: string | null;
+  cargo: string | null;
+  area: string | null;
+  mes: string;
+  mes_num: number;
+  fecha_ausencia: string;
+  tipo_ausencia: string;
+  concepto_ausencia: string;
+  hora_inicio: string | null;
+  hora_fin: string | null;
+  horas_ausencia: number;
+  dias_decimal: number;
+}
+
+export default function InformesPage() {
+  const [tab, setTab] = useState<Tab>('consolidado');
+  const [anio, setAnio] = useState(new Date().getFullYear());
+  const [loading, setLoading] = useState(true);
+  const [consolidado, setConsolidado] = useState<EmpleadoConsolidado[]>([]);
+  const [mensual, setMensual] = useState<MesData[]>([]);
+  const [ausencias, setAusencias] = useState<AusenciaRow[]>([]);
+  const [numEmpleados, setNumEmpleados] = useState(0);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<number | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/informes?anio=${anio}`);
+      const data = await res.json();
+      setConsolidado(data.consolidado || []);
+      setMensual(data.mensual || []);
+      setAusencias(data.ausencias || []);
+      setNumEmpleados(data.num_empleados || 0);
+    } finally {
+      setLoading(false);
+    }
+  }, [anio]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const empleadosConAusencias = Array.from(new Set(ausencias.map(a => a.user_id)))
+    .map(id => ausencias.find(a => a.user_id === id)!)
+    .sort((a, b) => a.empleado_nombre.localeCompare(b.empleado_nombre));
+
+  const ausenciasEmpleado = ausencias.filter(a => a.user_id === empleadoSeleccionado);
+  const totalDiasEmpleado = ausenciasEmpleado.reduce((s, a) => s + (Number(a.dias_decimal) || 0), 0);
+  const totalHorasEmpleado = ausenciasEmpleado.reduce((s, a) => s + (Number(a.horas_ausencia) || 0), 0);
+
+  const totalDiasAnio = mensual.reduce((s, m) => s + Number(m.total_dias_ausencia), 0);
+  const totalDiasLaborables = mensual.reduce((s, m) => s + Number(m.dias_laborables_totales), 0);
+  const porcentajeAnio = totalDiasLaborables > 0 ? (totalDiasAnio / totalDiasLaborables * 100).toFixed(2) : '0.00';
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Encabezado */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Informes de Ausentismo</h1>
+          <p className="text-sm text-gray-500 mt-1">Registro y análisis de ausencias laborales</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-gray-700">Año:</label>
+          <select
+            value={anio}
+            onChange={e => setAnio(parseInt(e.target.value))}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {[2024, 2025, 2026, 2027].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Tabs internos */}
+      <div className="flex border-b border-gray-200 mb-6 gap-0">
+        {([
+          { id: 'consolidado', label: 'Consolidado Anual', icon: <Users className="w-4 h-4" /> },
+          { id: 'mensual', label: 'Indicadores Mensuales', icon: <Calendar className="w-4 h-4" /> },
+          { id: 'personal', label: 'Informe Personal', icon: <User className="w-4 h-4" /> },
+        ] as { id: Tab; label: string; icon: React.ReactNode }[]).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
+              ${tab === t.id
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      ) : (
+        <>
+          {/* ===== CONSOLIDADO ANUAL ===== */}
+          {tab === 'consolidado' && (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                <StatCard label="Empleados" value={String(numEmpleados)} />
+                <StatCard label="Total días ausencia" value={totalDiasAnio.toFixed(4)} />
+                <StatCard label="% Ausentismo anual" value={`${porcentajeAnio}%`} />
+                <StatCard label="Año" value={String(anio)} />
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {['#', 'Nombre', 'Cédula', 'Cargo', 'Área', 'Total días ausencia', 'Costo ausencias año'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {consolidado.map((emp, i) => (
+                      <tr key={emp.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                        <td className="px-4 py-3 font-medium text-gray-900">{emp.name}</td>
+                        <td className="px-4 py-3 text-gray-600">{emp.cedula || <span className="text-amber-500 text-xs">Pendiente</span>}</td>
+                        <td className="px-4 py-3 text-gray-600">{emp.cargo || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">{emp.area || <span className="text-amber-500 text-xs">Pendiente</span>}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`font-semibold ${Number(emp.total_dias_ausencia) > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                            {Number(emp.total_dias_ausencia).toFixed(4)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {emp.salario
+                            ? `$${Math.round(Number(emp.costo_ausencias_anio)).toLocaleString('es-CO')}`
+                            : <span className="text-gray-300 text-xs">Sin salario</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                    <tr>
+                      <td colSpan={5} className="px-4 py-3 text-xs font-bold text-gray-700 uppercase">Total</td>
+                      <td className="px-4 py-3 text-center font-bold text-red-600">
+                        {consolidado.reduce((s, e) => s + Number(e.total_dias_ausencia), 0).toFixed(4)}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-gray-700">
+                        ${consolidado.reduce((s, e) => s + Number(e.costo_ausencias_anio), 0).toLocaleString('es-CO')}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ===== INDICADORES MENSUALES ===== */}
+          {tab === 'mensual' && (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                <StatCard label="Días laborales año" value={String(mensual.reduce((s, m) => s + m.dias_laborales, 0))} />
+                <StatCard label="Total días ausencia año" value={totalDiasAnio.toFixed(4)} />
+                <StatCard label="% Ausentismo anual" value={`${porcentajeAnio}%`} />
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      {['Mes', 'Días laborales', 'N° empleados', 'Días laborables totales', 'Total días ausencia', '% Ausentismo'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {mensual.map(m => {
+                      const pct = Number(m.dias_laborables_totales) > 0
+                        ? (Number(m.total_dias_ausencia) / Number(m.dias_laborables_totales) * 100).toFixed(2)
+                        : '0.00';
+                      return (
+                        <tr key={m.mes} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-medium text-gray-900">{MESES[m.mes]}</td>
+                          <td className="px-4 py-3 text-center text-gray-600">{m.dias_laborales}</td>
+                          <td className="px-4 py-3 text-center text-gray-600">{m.num_empleados}</td>
+                          <td className="px-4 py-3 text-center text-gray-600">{Number(m.dias_laborables_totales).toLocaleString('es-CO')}</td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`font-semibold ${Number(m.total_dias_ausencia) > 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                              {Number(m.total_dias_ausencia).toFixed(4)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${parseFloat(pct) > 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                              {pct}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                    <tr>
+                      <td className="px-4 py-3 text-xs font-bold text-gray-700 uppercase">Totales</td>
+                      <td className="px-4 py-3 text-center font-bold">{mensual.reduce((s, m) => s + m.dias_laborales, 0)}</td>
+                      <td className="px-4 py-3 text-center text-gray-400">—</td>
+                      <td className="px-4 py-3 text-center font-bold">{totalDiasLaborables.toLocaleString('es-CO')}</td>
+                      <td className="px-4 py-3 text-center font-bold text-red-600">{totalDiasAnio.toFixed(4)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${parseFloat(porcentajeAnio) > 1 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                          {porcentajeAnio}%
+                        </span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ===== INFORME PERSONAL ===== */}
+          {tab === 'personal' && (
+            <div>
+              <div className="mb-4 max-w-sm">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Selecciona un empleado</label>
+                <select
+                  value={empleadoSeleccionado ?? ''}
+                  onChange={e => setEmpleadoSeleccionado(e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">— Selecciona —</option>
+                  {empleadosConAusencias.map(e => (
+                    <option key={e.user_id} value={e.user_id}>{e.empleado_nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              {empleadoSeleccionado && ausenciasEmpleado.length > 0 && (
+                <>
+                  {/* Info del empleado */}
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div><span className="text-gray-500">Nombre:</span> <strong>{ausenciasEmpleado[0].empleado_nombre}</strong></div>
+                    <div><span className="text-gray-500">Cédula:</span> <strong>{ausenciasEmpleado[0].cedula || '—'}</strong></div>
+                    <div><span className="text-gray-500">Cargo:</span> <strong>{ausenciasEmpleado[0].cargo || '—'}</strong></div>
+                    <div><span className="text-gray-500">Área:</span> <strong>{ausenciasEmpleado[0].area || <span className="text-amber-500">Pendiente</span>}</strong></div>
+                  </div>
+
+                  <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          {['Mes', 'Fecha', 'Tipo de ausencia', 'Concepto', 'Hora inicio', 'Hora fin', 'Horas', 'Días decimal'].map(h => (
+                            <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {ausenciasEmpleado.map(a => (
+                          <tr key={a.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 text-gray-600">{MESES[a.mes_num] || a.mes}</td>
+                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                              {new Date(a.fecha_ausencia).toLocaleDateString('es-CO')}
+                            </td>
+                            <td className="px-4 py-3 text-gray-900">{a.tipo_ausencia}</td>
+                            <td className="px-4 py-3 text-gray-600">{a.concepto_ausencia}</td>
+                            <td className="px-4 py-3 text-center text-gray-500">{a.hora_inicio ? a.hora_inicio.slice(0,5) : '—'}</td>
+                            <td className="px-4 py-3 text-center text-gray-500">{a.hora_fin ? a.hora_fin.slice(0,5) : '—'}</td>
+                            <td className="px-4 py-3 text-center text-gray-600">{Number(a.horas_ausencia).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center font-semibold text-red-600">
+                              {Number(a.dias_decimal).toFixed(4)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                        <tr>
+                          <td colSpan={6} className="px-4 py-3 text-xs font-bold text-gray-700 uppercase">Total</td>
+                          <td className="px-4 py-3 text-center font-bold">{totalHorasEmpleado.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-center font-bold text-red-600">{totalDiasEmpleado.toFixed(4)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </>
+              )}
+
+              {empleadoSeleccionado && ausenciasEmpleado.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p>Este empleado no tiene ausencias registradas en {anio}.</p>
+                </div>
+              )}
+
+              {!empleadoSeleccionado && (
+                <div className="text-center py-12 text-gray-400">
+                  <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p>Selecciona un empleado para ver su informe de ausencias.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg p-4">
+      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
+      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+    </div>
+  );
+}

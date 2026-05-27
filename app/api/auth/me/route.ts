@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
+      cedula: user.cedula ?? null,
+      cargo: user.cargo ?? null,
+      area: user.area ?? null,
+      can_access_ausentismo: user.can_access_ausentismo ?? false,
     },
   });
 }

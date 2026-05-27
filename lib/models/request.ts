@@ -14,6 +14,11 @@ export class RequestModel {
       reason,
       urgency = 'medio',
       assigned_to_user_id,
+      tipo_ausencia,
+      concepto_ausencia,
+      fecha_ausencia,
+      hora_inicio,
+      hora_fin,
     } = input;
 
     const currentApproverRole: UserRole | null = null;
@@ -22,15 +27,32 @@ export class RequestModel {
 
     if (assigned_to_user_id) {
       assignedToUserId = assigned_to_user_id;
-      isCustomFlow = true; // Manual assignment is always custom flow in this context
+      isCustomFlow = true;
     }
 
-    // Role assignment logic removed. 
-    // currentApproverRole remains null.
+    // Calcular horas y días desde hora_inicio y hora_fin
+    let horasAusencia: number | null = null;
+    let diasDecimal: number | null = null;
+    if (hora_inicio && hora_fin) {
+      const [hI, mI] = hora_inicio.split(':').map(Number);
+      const [hF, mF] = hora_fin.split(':').map(Number);
+      horasAusencia = Math.round(((hF * 60 + mF) - (hI * 60 + mI)) / 60 * 100) / 100;
+      diasDecimal = Math.round((horasAusencia / 8) * 10000) / 10000;
+    }
 
     const rows = await sql`
-      INSERT INTO requests (type, title, description, reason, urgency, user_id, current_approver_role, assigned_to_user_id, custom_flow)
-      VALUES (${type}, ${title}, ${description}, ${reason || null}, ${urgency}, ${userId}, ${currentApproverRole}, ${assignedToUserId}, ${isCustomFlow})
+      INSERT INTO requests (
+        type, title, description, reason, urgency, user_id,
+        current_approver_role, assigned_to_user_id, custom_flow,
+        tipo_ausencia, concepto_ausencia, fecha_ausencia,
+        hora_inicio, hora_fin, horas_ausencia, dias_decimal
+      )
+      VALUES (
+        ${type}, ${title}, ${description}, ${reason || null}, ${urgency}, ${userId},
+        ${currentApproverRole}, ${assignedToUserId}, ${isCustomFlow},
+        ${tipo_ausencia || null}, ${concepto_ausencia || null}, ${fecha_ausencia || null},
+        ${hora_inicio || null}, ${hora_fin || null}, ${horasAusencia}, ${diasDecimal}
+      )
       RETURNING *
     `;
 

@@ -3,26 +3,40 @@
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { User } from '@/types';
 import { ShoppingCart, Calendar, Monitor, FileText, Wrench, FileEdit } from 'lucide-react';
+import { ProfileCompletionModal } from '@/components/profile/ProfileCompletionModal';
 
 export default function HomePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [missingFields, setMissingFields] = useState<{ cedula: boolean; cargo: boolean; area: boolean } | null>(null);
 
-  useEffect(() => {
+  const loadUser = () => {
     fetch('/api/auth/me')
       .then(res => {
         if (!res.ok) throw new Error('Not authenticated');
         return res.json();
       })
-      .then(data => setUser(data.user))
+      .then(data => {
+        setUser(data.user);
+        const missing = {
+          cedula: !data.user.cedula,
+          cargo: !data.user.cargo,
+          area: !data.user.area,
+        };
+        const hasMissing = missing.cedula || missing.cargo || missing.area;
+        setMissingFields(hasMissing ? missing : null);
+      })
       .catch(() => router.push('/'))
       .finally(() => setLoading(false));
-  }, [router]);
+  };
+
+  useEffect(() => { loadUser(); }, [router]);
 
   if (loading) {
     return (
@@ -84,6 +98,13 @@ export default function HomePage() {
   ];
 
   return (
+    <>
+      {missingFields && (
+        <ProfileCompletionModal
+          missingFields={missingFields}
+          onCompleted={() => { setMissingFields(null); loadUser(); }}
+        />
+      )}
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-primary mb-2">
@@ -116,5 +137,6 @@ export default function HomePage() {
         ))}
       </div>
     </div>
+    </>
   );
 }
