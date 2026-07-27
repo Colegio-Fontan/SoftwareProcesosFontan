@@ -100,6 +100,17 @@ async function createSchema() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )`;
 
+    // 2b. Columnas de ausencia (type='permiso'). Se agregan aparte porque la
+    // tabla `requests` ya existe en producción.
+    console.log('  - Asegurando columnas de ausencia...');
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS tipo_ausencia TEXT`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS concepto_ausencia TEXT`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS fecha_ausencia DATE`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS hora_inicio TEXT`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS hora_fin TEXT`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS horas_ausencia NUMERIC(6,2)`;
+    await sql`ALTER TABLE requests ADD COLUMN IF NOT EXISTS dias_decimal NUMERIC(8,4)`;
+
     // 3. Crear índices
     console.log('  - Creando índices...');
     await sql`CREATE INDEX IF NOT EXISTS idx_requests_user_id ON requests(user_id)`;

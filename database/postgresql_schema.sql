@@ -61,6 +61,15 @@ CREATE TABLE IF NOT EXISTS requests (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Columnas de ausencia (solo type='permiso')
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS tipo_ausencia TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS concepto_ausencia TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS fecha_ausencia DATE;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS hora_inicio TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS hora_fin TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS horas_ausencia NUMERIC(6,2);
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS dias_decimal NUMERIC(8,4);
+
 -- Tabla de archivos adjuntos
 CREATE TABLE IF NOT EXISTS attachments (
   id SERIAL PRIMARY KEY,

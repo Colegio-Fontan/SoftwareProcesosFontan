@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAttachmentUrl } from '@/lib/storage';
 import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
+import { isDescriptionEmpty, formatFechaAusencia } from '@/lib/utils/request-description';
+import { isClosedStatus, isOrphanRequest } from '@/lib/utils/request-status';
 import { Settings, Paperclip, CheckCircle, Search, File as FileIcon, Upload, AlertTriangle, Zap, Forward, Clock, Lock, Trash2, User, Building2 } from 'lucide-react';
 import type { Request, User as TypeUser, ApprovalHistory } from '@/types';
 
@@ -188,6 +190,9 @@ export default function RequestDetailPage({
   // 4. ¿No tiene asignación? (disponible para todos excepto el creador)
   const isUnassigned = !request.current_approver_role && !request.assigned_to_user_id;
 
+  const isClosed = isClosedStatus(request.status);
+  const isOrphan = isOrphanRequest(request);
+
   // El creador NUNCA puede actuar sobre su propio proceso (solo ver y eliminar)
   const canApprove = !isOwner &&
     (isMyRole || isMyDirectAssignment || isAdmin || isUnassigned) &&
@@ -232,8 +237,51 @@ export default function RequestDetailPage({
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">Descripción</h3>
-                <p className="text-gray-600 whitespace-pre-wrap">{request.description}</p>
+                {isDescriptionEmpty(request.description) ? (
+                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    Esta solicitud se registró sin descripción. Pídele el detalle al solicitante antes de resolverla.
+                  </p>
+                ) : (
+                  <p className="text-gray-600 whitespace-pre-wrap">{request.description}</p>
+                )}
               </div>
+
+              {request.type === 'permiso' && request.tipo_ausencia && (
+                <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/60">
+                  <h3 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" /> Detalle de la ausencia
+                  </h3>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-gray-400 uppercase font-bold tracking-wider">Tipo</dt>
+                      <dd className="text-gray-700">{request.tipo_ausencia}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-400 uppercase font-bold tracking-wider">Concepto</dt>
+                      <dd className="text-gray-700">{request.concepto_ausencia || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-400 uppercase font-bold tracking-wider">Fecha</dt>
+                      <dd className="text-gray-700">{formatFechaAusencia(request.fecha_ausencia) || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-gray-400 uppercase font-bold tracking-wider">Horario</dt>
+                      <dd className="text-gray-700">
+                        {request.hora_inicio && request.hora_fin
+                          ? `${request.hora_inicio} a ${request.hora_fin}`
+                          : '—'}
+                        {request.horas_ausencia != null && (
+                          <span className="text-gray-500">
+                            {' '}({request.horas_ausencia} horas
+                            {request.dias_decimal != null && ` · ${request.dias_decimal} días`})
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
                 <div>
@@ -250,17 +298,28 @@ export default function RequestDetailPage({
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">Responsable Actual</p>
-                  <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-3">
-                    <p className="font-bold text-secondary flex items-center gap-2">
-                      {request.assigned_to
-                        ? <><User className="w-4 h-4 text-primary" /> {request.assigned_to.name}</>
-                        : request.current_approver_role
-                          ? <><Building2 className="w-4 h-4 text-primary" /> {roleLabels[request.current_approver_role] || request.current_approver_role}</>
-                          : <><CheckCircle className="w-4 h-4 text-green-500" /> Finalizado</>
+                  <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">
+                    {isClosed ? 'Resultado Final' : 'Responsable Actual'}
+                  </p>
+                  {/* Se decide por el ESTADO: antes, cualquier solicitud sin
+                      responsable decía "Finalizado" aunque siguiera pendiente. */}
+                  <div className={`border rounded-xl p-3 ${isOrphan ? 'bg-amber-50 border-amber-200' : 'bg-secondary/5 border-secondary/20'}`}>
+                    <p className={`font-bold flex items-center gap-2 ${isOrphan ? 'text-amber-700' : 'text-secondary'}`}>
+                      {isClosed
+                        ? <><CheckCircle className="w-4 h-4 text-green-500" /> {statusLabels[request.status]}</>
+                        : request.assigned_to
+                          ? <><User className="w-4 h-4 text-primary" /> {request.assigned_to.name}</>
+                          : request.current_approver_role
+                            ? <><Building2 className="w-4 h-4 text-primary" /> {roleLabels[request.current_approver_role] || request.current_approver_role}</>
+                            : <><AlertTriangle className="w-4 h-4" /> Sin responsable asignado</>
                       }
                     </p>
-
+                    {isOrphan && (
+                      <p className="text-xs text-amber-700 mt-1">
+                        Esta solicitud sigue <strong>{statusLabels[request.status].toLowerCase()}</strong> y nadie la ha tomado.
+                        Recíbela o reenvíala para que deje de quedarse en pendientes.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -419,17 +478,26 @@ export default function RequestDetailPage({
               </div>
             ) : (
               <div className="space-y-3">
-                {isMyRole || isMyDirectAssignment ? (
+                {isOrphan ? (
+                  <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+                    ⚠️ Esta solicitud <strong>no tiene responsable asignado</strong> y sigue {statusLabels[request.status].toLowerCase()}.
+                    {isOwner
+                      ? ' Nadie la ha tomado todavía; repórtala para que alguien la reciba.'
+                      : ' Cualquiera puede recibirla.'}
+                  </p>
+                ) : isClosed ? (
                   <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-100">
-                    ✅ Esta solicitud ya ha sido procesada.
+                    ✅ Esta solicitud ya fue procesada ({statusLabels[request.status].toLowerCase()}).
                   </p>
                 ) : isOwner ? (
                   <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border">
-                    ⏳ <strong>Estado:</strong> Tu solicitud está siendo revisada por <strong>{request.current_approver_role || 'el área encargada'}</strong>.
+                    ⏳ <strong>Estado:</strong> Tu solicitud está siendo revisada por{' '}
+                    <strong>{request.assigned_to?.name || roleLabels[request.current_approver_role || ''] || 'el área encargada'}</strong>.
                   </p>
                 ) : (
                   <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border">
-                    🔒 Esta solicitud está asignada a: <strong>{request.current_approver_role || 'otra persona'}</strong>.
+                    🔒 Esta solicitud está asignada a:{' '}
+                    <strong>{request.assigned_to?.name || roleLabels[request.current_approver_role || ''] || 'otra persona'}</strong>.
                   </p>
                 )}
               </div>

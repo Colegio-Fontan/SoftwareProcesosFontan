@@ -1,5 +1,17 @@
 import nodemailer from 'nodemailer';
+import { isDescriptionEmpty } from './utils/request-description';
 import type { User } from '@/types';
+
+/**
+ * Muestra la descripción en el correo. Si viene vacía (solicitudes antiguas)
+ * se avisa explícitamente en vez de dejar el bloque en blanco.
+ */
+function renderDescription(description: string | null | undefined): string {
+  if (isDescriptionEmpty(description)) {
+    return '<em style="color:#b45309;">Esta solicitud se registró sin descripción. Consulta al solicitante antes de resolverla.</em>';
+  }
+  return String(description);
+}
 
 // Configuración del transportador de correo
 const createTransporter = () => {
@@ -388,11 +400,11 @@ function generateEmailHTML(
                   <p style="margin: 0 0 5px; font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase;">
                     Descripción
                   </p>
-                  <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6;">
-                    ${processData.processDescription}
+                  <p style="margin: 0; font-size: 14px; color: #374151; line-height: 1.6; white-space: pre-wrap;">
+                    ${renderDescription(processData.processDescription)}
                   </p>
                 </div>
-                
+
                 <!-- Created By -->
                 <div style="border-top: 1px solid #e5e7eb; padding-top: 15px;">
                   <p style="margin: 0 0 5px; font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase;">

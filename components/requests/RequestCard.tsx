@@ -6,7 +6,9 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import type { Request } from '@/types';
 import { format } from 'date-fns';
-import { Paperclip, CheckCircle, XCircle, User, Building2 } from 'lucide-react';
+import { isDescriptionEmpty } from '@/lib/utils/request-description';
+import { isClosedStatus, isOrphanRequest } from '@/lib/utils/request-status';
+import { Paperclip, CheckCircle, XCircle, User, Building2, AlertTriangle } from 'lucide-react';
 
 interface RequestCardProps {
   request: Request;
@@ -63,6 +65,12 @@ const urgencyVariants: Record<string, 'default' | 'warning' | 'danger'> = {
 };
 
 export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
+  const closed = isClosedStatus(request.status);
+  const isOrphan = isOrphanRequest(request);
+  const diasAbierta = Math.floor(
+    (Date.now() - new Date(request.created_at).getTime()) / 86400000
+  );
+
   return (
     <Link href={`/requests/${request.id}`}>
       <Card hover className="cursor-pointer">
@@ -71,7 +79,11 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
             <h3 className="text-lg font-semibold text-gray-900 mb-1">
               {request.title}
             </h3>
-            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{request.description}</p>
+            {isDescriptionEmpty(request.description) ? (
+              <p className="text-sm text-amber-600 italic mb-2">Sin descripción registrada</p>
+            ) : (
+              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{request.description}</p>
+            )}
           </div>
         </div>
 
@@ -93,26 +105,33 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
           )}
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-3 mb-4 border border-gray-100">
+        <div className={`rounded-lg p-3 mb-4 border ${isOrphan ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-100'}`}>
           <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">
-            {request.status === 'aceptado' || request.status === 'rechazado' || request.status === 'resuelto'
-              ? 'Resultado Final'
-              : 'Responsable actual'}
+            {closed ? 'Resultado Final' : 'Responsable actual'}
           </p>
           <div className="flex items-center gap-2">
-            <span className={`text-sm font-semibold flex items-center gap-1 ${request.status === 'aceptado' ? 'text-green-600' :
-              request.status === 'rechazado' ? 'text-red-600' : 'text-primary'
+            {/* El texto se decide por el ESTADO. Antes, una solicitud abierta sin
+                responsable decía "Nadie (Finalizado)" y parecía cerrada. */}
+            <span className={`text-sm font-semibold flex items-center gap-1 ${
+              request.status === 'rechazado' ? 'text-red-600' :
+                closed ? 'text-green-600' :
+                  isOrphan ? 'text-amber-700' : 'text-primary'
               }`}>
-              {request.status === 'aceptado' ? <><CheckCircle className="w-4 h-4" /> Aceptado</> :
-                request.status === 'rechazado' ? <><XCircle className="w-4 h-4" /> Rechazado</> :
+              {request.status === 'rechazado' ? <><XCircle className="w-4 h-4" /> Rechazado</> :
+                closed ? <><CheckCircle className="w-4 h-4" /> {statusLabels[request.status]}</> :
                   request.assigned_to
                     ? <><User className="w-4 h-4" /> {request.assigned_to.name}</>
                     : request.current_approver_role
                       ? <><Building2 className="w-4 h-4" /> {roleLabels[request.current_approver_role] || request.current_approver_role}</>
-                      : 'Nadie (Finalizado)'
+                      : <><AlertTriangle className="w-4 h-4" /> Sin responsable asignado</>
               }
             </span>
           </div>
+          {isOrphan && (
+            <p className="text-[11px] text-amber-700 mt-1">
+              Nadie la ha tomado. Ábrela para recibirla o reenviarla a quien corresponda.
+            </p>
+          )}
 
           {/* Veredicto de respuesta */}
           {(request.status === 'aceptado' || request.status === 'rechazado' || request.status === 'resuelto') && request.last_comment && (
@@ -127,7 +146,22 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
           <span>
             De: <span className="font-medium text-gray-700">{request.user?.name || 'Usuario desconocido'}</span>
           </span>
-          <span>
+          <span className="flex items-center gap-2">
+            {/* Antigüedad visible: sin esto, una solicitud abierta podía pasar
+                meses sin que nadie notara que seguía ahí. */}
+            {!closed && diasAbierta >= 3 && (
+              <span
+                className={`font-bold px-2 py-0.5 rounded-full ${
+                  diasAbierta >= 30
+                    ? 'bg-red-100 text-red-700'
+                    : diasAbierta >= 7
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {diasAbierta} días abierta
+              </span>
+            )}
             {format(new Date(request.created_at), "d 'de' MMM")}
           </span>
         </div>

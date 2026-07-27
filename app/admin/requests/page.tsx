@@ -45,8 +45,8 @@ export default function AdminRequestsPage() {
     let filtered = [...requests];
     if (searchTerm) {
       filtered = filtered.filter(req =>
-        req.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.user?.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { RequestForm } from '@/components/requests/RequestForm';
 import { Card } from '@/components/ui/Card';
 import { uploadRequestAttachment } from '@/lib/hooks/uploadAttachment';
+import { DESCRIPTION_REQUIRED_MESSAGE } from '@/lib/utils/request-description';
 import type { RequestType, CreateRequestInput } from '@/types';
 
 export default function NewRequestPage() {
@@ -26,10 +27,16 @@ export default function NewRequestPage() {
     setError('');
 
     try {
+      const description = ((formData.get('description') as string) || '').trim();
+      if (!description) {
+        setError(DESCRIPTION_REQUIRED_MESSAGE);
+        return;
+      }
+
       const data: CreateRequestInput = {
         type: type,
-        title: formData.get('title') as string,
-        description: (formData.get('description') as string) || ' ',
+        title: ((formData.get('title') as string) || '').trim(),
+        description,
         reason: (formData.get('reason') as string) || undefined,
         urgency: (formData.get('urgency') as 'bajo' | 'medio' | 'alto') || 'bajo',
       };
@@ -58,7 +65,8 @@ export default function NewRequestPage() {
       const result = await res.json();
 
       if (!res.ok) {
-        setError(result.error || 'Error al crear la solicitud');
+        const detail = Array.isArray(result.details) ? result.details[0]?.message : null;
+        setError(detail || result.error || 'Error al crear la solicitud');
         return;
       }
 

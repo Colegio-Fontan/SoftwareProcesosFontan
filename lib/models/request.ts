@@ -10,7 +10,7 @@ export class RequestModel {
     const {
       type,
       title,
-      description,
+      description: rawDescription,
       reason,
       urgency = 'medio',
       assigned_to_user_id,
@@ -21,6 +21,12 @@ export class RequestModel {
       hora_fin,
     } = input;
 
+    // Última barrera: nunca guardar una solicitud con la descripción vacía.
+    const description = (rawDescription ?? '').trim();
+    if (!description) {
+      throw new Error('La descripción es obligatoria y no puede quedar vacía.');
+    }
+
     const currentApproverRole: UserRole | null = null;
     let assignedToUserId: number | null = null;
     let isCustomFlow = false;
@@ -28,6 +34,10 @@ export class RequestModel {
     if (assigned_to_user_id) {
       assignedToUserId = assigned_to_user_id;
       isCustomFlow = true;
+    } else {
+      // Sin responsable la solicitud nace huérfana: nadie la ve como propia y
+      // se queda en la bandeja de pendientes de todos indefinidamente.
+      throw new Error('La solicitud debe tener un responsable asignado.');
     }
 
     // Calcular horas y días desde hora_inicio y hora_fin

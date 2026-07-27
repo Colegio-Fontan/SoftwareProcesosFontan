@@ -8,6 +8,7 @@ import type { Request, ApprovalHistory, Attachment } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { getAttachmentUrl } from '@/lib/storage';
+import { isDescriptionEmpty } from '@/lib/utils/request-description';
 
 export default function AdminRequestDetailPage({
   params,
@@ -53,7 +54,13 @@ export default function AdminRequestDetailPage({
         <div className="space-y-4">
           <div>
             <h3 className="font-bold text-gray-700">Descripción</h3>
-            <p className="p-4 bg-gray-50 rounded-lg">{request.description}</p>
+            {isDescriptionEmpty(request.description) ? (
+              <p className="p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-sm">
+                ⚠️ Esta solicitud se registró sin descripción.
+              </p>
+            ) : (
+              <p className="p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">{request.description}</p>
+            )}
           </div>
           {request.attachments && request.attachments.length > 0 && (
             <div className="border-t pt-4">

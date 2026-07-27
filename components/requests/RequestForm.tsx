@@ -7,6 +7,11 @@ import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { ApproverSelector } from './ApproverSelector';
 import { ImageAttachmentPicker } from './ImageAttachmentPicker';
+import {
+  MIN_DESCRIPTION_LENGTH,
+  buildPermisoDescription,
+  validateDescription,
+} from '@/lib/utils/request-description';
 import type { RequestType, UrgencyLevel } from '@/types';
 
 const TIPOS_AUSENCIA = [
@@ -50,6 +55,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
   isLoading = false,
 }) => {
   const isPermiso = type === 'permiso';
+  const descriptionRef = React.useRef<HTMLTextAreaElement>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -67,6 +73,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
   });
 
   const [files, setFiles] = useState<File[]>([]);
+  const [descriptionError, setDescriptionError] = useState('');
 
   const [approverSelection, setApproverSelection] = useState<{
     type: 'role' | 'user' | 'default';
@@ -77,6 +84,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
     e.preventDefault();
     const data = new FormData();
     data.append('type', type);
+    setDescriptionError('');
 
     if (isPermiso) {
       if (!ausenciaData.tipo_ausencia || !ausenciaData.concepto_ausencia || !ausenciaData.fecha_ausencia || !ausenciaData.hora_inicio || !ausenciaData.hora_fin) {
@@ -84,16 +92,25 @@ export const RequestForm: React.FC<RequestFormProps> = ({
         return;
       }
       const autoTitle = `${ausenciaData.tipo_ausencia} - ${ausenciaData.fecha_ausencia}`;
+      // La descripción se compone con el detalle de la ausencia para que el
+      // aprobador nunca reciba la solicitud vacía.
       data.append('title', autoTitle);
-      data.append('description', formData.description || ' ');
+      data.append('description', buildPermisoDescription(ausenciaData, formData.description));
       data.append('tipo_ausencia', ausenciaData.tipo_ausencia);
       data.append('concepto_ausencia', ausenciaData.concepto_ausencia);
       data.append('fecha_ausencia', ausenciaData.fecha_ausencia);
       data.append('hora_inicio', ausenciaData.hora_inicio);
       data.append('hora_fin', ausenciaData.hora_fin);
     } else {
-      data.append('title', formData.title);
-      data.append('description', formData.description);
+      const error = validateDescription(formData.description);
+      if (error) {
+        setDescriptionError(error);
+        descriptionRef.current?.focus();
+        descriptionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      data.append('title', formData.title.trim());
+      data.append('description', formData.description.trim());
       if (formData.reason) data.append('reason', formData.reason);
     }
 
@@ -186,6 +203,7 @@ export const RequestForm: React.FC<RequestFormProps> = ({
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={3}
+            hint="El tipo, concepto, fecha y horario quedan registrados automáticamente en la descripción de la solicitud."
             placeholder="Información adicional sobre la ausencia..."
           />
         </>
@@ -200,10 +218,17 @@ export const RequestForm: React.FC<RequestFormProps> = ({
           />
 
           <Textarea
-            label={type === 'personalizada' ? 'Detalle completo de la solicitud' : 'Descripción detallada'}
+            ref={descriptionRef}
+            label={type === 'personalizada' ? 'Detalle completo de la solicitud *' : 'Descripción detallada *'}
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, description: e.target.value });
+              if (descriptionError) setDescriptionError('');
+            }}
             required
+            minLength={MIN_DESCRIPTION_LENGTH}
+            error={descriptionError}
+            hint={`Obligatoria — mínimo ${MIN_DESCRIPTION_LENGTH} caracteres (llevas ${formData.description.trim().length}).`}
             rows={type === 'personalizada' ? 12 : 6}
             placeholder={
               type === 'personalizada'

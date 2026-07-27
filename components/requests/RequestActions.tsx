@@ -93,6 +93,16 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
         </div>
       )}
 
+      {currentStatus === 'aceptado' && !successInfo && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm flex items-start gap-2">
+          <AlertTriangle className="text-amber-600 mt-0.5 w-4 h-4 shrink-0" />
+          <span>
+            Ya recibiste esta solicitud, pero <strong>sigue abierta</strong>. Pulsa{' '}
+            <strong>Resolver</strong> para cerrarla y sacarla de tus pendientes.
+          </span>
+        </div>
+      )}
+
       <div className="space-y-4">
         <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
           <Textarea
@@ -116,7 +126,7 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
           className="flex-1 border-none relative bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 active:scale-95 py-6 h-auto flex flex-col items-center justify-center gap-2 rounded-xl"
         >
           <span className="font-bold text-lg flex items-center gap-2"><ThumbsUp className="w-5 h-5" /> Recibir</span>
-          <span className="text-[9px] uppercase font-bold opacity-90 tracking-widest bg-black/10 px-2 py-0.5 rounded-full">Asignar y tomar</span>
+          <span className="text-[9px] uppercase font-bold opacity-90 tracking-widest bg-black/10 px-2 py-0.5 rounded-full">No la cierra</span>
         </Button>
         )}
 
@@ -156,20 +166,33 @@ export const RequestActions: React.FC<RequestActionsProps> = ({
       )}
 
       {successInfo && (
-        <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 animate-in fade-in slide-in-from-top-2">
-          <p className="text-green-800 font-bold mb-1 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" /> {successInfo.status === 'resuelto' ? 'Finalizado correctamente' : successInfo.status === 'aceptado' ? 'Recibido correctamente' : 'Rechazado correctamente'}
-          </p>
-          <p className="text-sm text-green-700">
-            {successInfo.nextRole
-              ? `La solicitud ha sido enviada a: `
-              : `La solicitud ha finalizado con estado: `
-            }
-            <strong className="uppercase">{successInfo.nextRole ? (roleLabels[successInfo.nextRole] || successInfo.nextRole) :
-              successInfo.status === 'resuelto' ? 'RESUELTO' :
-                successInfo.status === 'aceptado' ? 'RECIBIDO' : 'RECHAZADO'}</strong>
-          </p>
-        </div>
+        // "Recibir" NO cierra la solicitud: la deja en estado 'aceptado', que
+        // sigue abierto. El mensaje anterior decía "la solicitud ha finalizado"
+        // para los tres casos, y por eso quedaban procesos meses en pendientes.
+        successInfo.status === 'aceptado' ? (
+          <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 animate-in fade-in slide-in-from-top-2">
+            <p className="text-amber-800 font-bold mb-1 flex items-center gap-2">
+              <ThumbsUp className="w-5 h-5" /> Recibido correctamente
+            </p>
+            <p className="text-sm text-amber-800">
+              La solicitud quedó <strong>a tu cargo</strong> y sigue <strong>abierta</strong>.
+              Todavía falta cerrarla: cuando termines, pulsa <strong>Resolver</strong> para
+              finalizarla. Mientras tanto seguirá apareciendo en tus pendientes.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200 animate-in fade-in slide-in-from-top-2">
+            <p className="text-green-800 font-bold mb-1 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" /> {successInfo.status === 'resuelto' ? 'Finalizado correctamente' : 'Rechazado correctamente'}
+            </p>
+            <p className="text-sm text-green-700">
+              {successInfo.nextRole
+                ? <>La solicitud ha sido enviada a: <strong className="uppercase">{roleLabels[successInfo.nextRole] || successInfo.nextRole}</strong></>
+                : <>La solicitud ha finalizado con estado: <strong className="uppercase">{successInfo.status === 'resuelto' ? 'RESUELTO' : 'RECHAZADO'}</strong></>
+              }
+            </p>
+          </div>
+        )
       )}
     </div>
   );

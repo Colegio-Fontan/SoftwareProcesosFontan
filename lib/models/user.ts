@@ -13,11 +13,25 @@ export class UserModel {
     return rows[0] as User | undefined;
   }
 
+  /**
+   * Busca un usuario por id SIN datos sensibles.
+   *
+   * El resultado se adjunta a las solicitudes (`user` / `assigned_to`), que se
+   * devuelven por API y se envían al navegador; con `SELECT *` el hash de la
+   * contraseña y el token de confirmación viajaban con ellas.
+   * Para validar contraseñas está `verifyPassword`, que hace su propia consulta.
+   */
   static async findById(id: number): Promise<User | undefined> {
     const rows = await sql`SELECT * FROM users WHERE id = ${id}`;
-    const user = rows[0] as User | undefined;
-    if (!user) console.log(`[UserModel] User with ID ${id} not found in database`);
-    return user;
+    const row = rows[0] as (User & { password?: string; confirmation_token?: string }) | undefined;
+    if (!row) {
+      console.log(`[UserModel] User with ID ${id} not found in database`);
+      return undefined;
+    }
+    const { password: _password, confirmation_token: _token, ...safeUser } = row;
+    void _password;
+    void _token;
+    return safeUser as User;
   }
 
   static async create(email: string, password: string, name: string, role: UserRole, confirmationToken?: string): Promise<User> {
