@@ -61,6 +61,26 @@ export interface Request {
   hora_fin?: string | null;
   horas_ausencia?: number | null;
   dias_decimal?: number | null;
+  // Soporte de la ausencia que el aprobador dejó pendiente
+  soporte_estado?: SoporteEstado | null;
+  soporte_solicitado_por?: number | null;
+  soporte_solicitado_at?: string | null;
+  soporte_entregado_at?: string | null;
+  soporte_alerta_at?: string | null;
+}
+
+export type SoporteEstado = 'pendiente' | 'entregado';
+
+export type NotificationType = 'soporte_pendiente' | 'soporte_vencido' | 'soporte_entregado';
+
+export interface Notification {
+  id: number;
+  user_id: number;
+  request_id: number | null;
+  tipo: NotificationType;
+  mensaje: string;
+  leida: boolean;
+  created_at: string;
 }
 
 export interface Attachment {

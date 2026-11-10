@@ -578,8 +578,109 @@ export async function sendPasswordResetEmail(
   }
 }
 
+interface SoporteEmailData {
+  processId: number;
+  subject: string;
+  heading: string;
+  message: string;
+  detail?: string;
+  buttonLabel: string;
+}
+
+/**
+ * Envía los avisos del soporte de ausencia: al empleado para que lo suba, y al
+ * aprobador cuando lo sube o cuando pasan 3 días sin subirlo.
+ */
+export async function sendSoporteNotification(
+  recipientUser: User,
+  data: SoporteEmailData
+): Promise<boolean> {
+  try {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+      console.log('📧 Notificación no enviada: Configuración SMTP no disponible');
+      return false;
+    }
+
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@colegiofontan.edu.co';
+    const emailFromName = process.env.EMAIL_FROM_NAME || 'Sistema de Procesos Fontán';
+    const gradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${data.heading}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: ${gradient}; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                📎 ${data.heading}
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px 30px 20px;">
+              <p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.5;">
+                Hola <strong>${recipientUser.name}</strong>,
+              </p>
+              <p style="margin: 0 0 10px; font-size: 16px; color: #374151; line-height: 1.5;">
+                ${data.message}
+              </p>
+              ${data.detail ? `
+              <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 4px; padding: 16px; margin-top: 16px;">
+                <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.6;">${data.detail}</p>
+              </div>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/requests/${data.processId}"
+                 style="display: inline-block; background: ${gradient}; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                ${data.buttonLabel}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 20px 30px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+              <p style="margin: 0; font-size: 12px; color: #6b7280;">
+                Este es un correo automático del Sistema de Procesos Fontán.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    await transporter.sendMail({
+      from: `"${emailFromName}" <${emailFrom}>`,
+      to: recipientUser.email,
+      subject: data.subject,
+      html: htmlContent,
+    });
+    console.log(`✅ Correo de soporte enviado a ${recipientUser.email}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al enviar correo de soporte:', error);
+    return false;
+  }
+}
+
 const emailService = {
   sendProcessAssignmentNotification,
+  sendSoporteNotification,
   sendProcessResolutionNotification,
   sendProcessStatusUpdateNotification,
   sendConfirmationEmail,

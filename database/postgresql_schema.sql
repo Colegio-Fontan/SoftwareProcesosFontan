@@ -70,6 +70,26 @@ ALTER TABLE requests ADD COLUMN IF NOT EXISTS hora_fin TEXT;
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS horas_ausencia NUMERIC(6,2);
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS dias_decimal NUMERIC(8,4);
 
+-- Soporte de ausencia (incapacidad, cita médica, etc.) que el aprobador deja pendiente.
+-- soporte_estado: NULL (no se pidió) | 'pendiente' | 'entregado'
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS soporte_estado TEXT;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS soporte_solicitado_por INTEGER REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS soporte_solicitado_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS soporte_entregado_at TIMESTAMP WITH TIME ZONE;
+-- Cuándo se avisó al aprobador de que pasaron 3 días sin soporte (se avisa una sola vez)
+ALTER TABLE requests ADD COLUMN IF NOT EXISTS soporte_alerta_at TIMESTAMP WITH TIME ZONE;
+
+-- Notificaciones dentro de la plataforma (campana del encabezado)
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  request_id INTEGER REFERENCES requests(id) ON DELETE CASCADE,
+  tipo TEXT NOT NULL,
+  mensaje TEXT NOT NULL,
+  leida BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabla de archivos adjuntos
 CREATE TABLE IF NOT EXISTS attachments (
   id SERIAL PRIMARY KEY,
@@ -96,6 +116,17 @@ CREATE TABLE IF NOT EXISTS approval_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Listado de salarios de nómina (cargado desde el Excel de Gestión Humana).
+-- Al completar su cédula, cada usuario recibe de aquí su salario y fecha de ingreso.
+CREATE TABLE IF NOT EXISTS salarios_empleados (
+  cedula TEXT PRIMARY KEY, -- solo dígitos
+  nombre TEXT NOT NULL,
+  cargo TEXT,
+  salario INTEGER NOT NULL,
+  fecha_ingreso DATE,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices para mejorar rendimiento
 CREATE INDEX IF NOT EXISTS idx_requests_user_id ON requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_requests_type ON requests(type);
@@ -103,3 +134,5 @@ CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 CREATE INDEX IF NOT EXISTS idx_requests_current_approver ON requests(current_approver_role);
 CREATE INDEX IF NOT EXISTS idx_attachments_request_id ON attachments(request_id);
 CREATE INDEX IF NOT EXISTS idx_approval_history_request_id ON approval_history(request_id);
+CREATE INDEX IF NOT EXISTS idx_requests_soporte_pendiente ON requests(soporte_solicitado_at) WHERE soporte_estado = 'pendiente';
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, leida, created_at DESC);

@@ -3,6 +3,7 @@ import { put } from '@vercel/blob';
 import { getAuthUser } from '@/lib/auth';
 import { RequestModel } from '@/lib/models/request';
 import { AttachmentModel } from '@/lib/models/attachment';
+import { registrarSoporteEntregado } from '@/lib/soporte';
 import {
   ACCEPTED_ATTACHMENT_MIME_TYPES,
   MAX_ATTACHMENT_MB,
@@ -111,6 +112,15 @@ export async function POST(
       file.size,
       blob.url
     );
+
+    // Si el empleado sube un archivo a una ausencia con soporte pendiente, ese es el soporte
+    if (isOwner && existingRequest.soporte_estado === 'pendiente') {
+      try {
+        await registrarSoporteEntregado(requestId, user.id);
+      } catch (err) {
+        console.error('[attachments] error registrando soporte entregado:', err);
+      }
+    }
 
     return NextResponse.json({ attachment }, { status: 201 });
   } catch (error) {

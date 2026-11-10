@@ -22,6 +22,19 @@ export async function PATCH(request: NextRequest) {
       WHERE id = ${user.id}
     `;
 
+    // Asigna salario y fecha de ingreso desde el listado de nómina, cruzando por cédula
+    await sql`
+      UPDATE users u
+      SET
+        salario = s.salario,
+        fecha_ingreso = COALESCE(u.fecha_ingreso, s.fecha_ingreso),
+        updated_at = CURRENT_TIMESTAMP
+      FROM salarios_empleados s
+      WHERE u.id = ${user.id}
+        AND u.salario IS NULL
+        AND s.cedula = regexp_replace(u.cedula, '[^0-9]', '', 'g')
+    `;
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[PATCH /api/users/me]', error);

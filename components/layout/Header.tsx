@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import type { User } from '@/types';
 import Image from 'next/image';
 import { Home, ClipboardList, Bell, LayoutDashboard, LogOut, BarChart2 } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   user: User | null;
@@ -71,6 +72,8 @@ export const Header: React.FC<HeaderProps> = ({ user }) => {
                     <BarChart2 className="w-4 h-4" /> Ausentismo
                   </Link>
                 )}
+
+                <NotificationBell />
 
                 <div className="flex items-center gap-3 border-l border-white/20 pl-6">
                   <div className="text-right">

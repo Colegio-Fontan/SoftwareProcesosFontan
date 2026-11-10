@@ -45,3 +45,11 @@ next-env.d.ts
 /final-lint-out.txt
 
 .env*
+
+# datos de nómina y ausentismo (salarios, cédulas): nunca al repositorio
+*.xlsx
+*.xls
+*.csv
+empleados_data.json
+/resultado*.txt
+/output_*.txt

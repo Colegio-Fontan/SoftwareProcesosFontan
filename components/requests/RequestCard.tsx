@@ -96,6 +96,21 @@ export const RequestCard: React.FC<RequestCardProps> = ({ request }) => {
             Urgencia: {urgencyLabels[request.urgency]}
           </Badge>
 
+          {request.soporte_estado === 'pendiente' && (
+            <Badge variant="warning">
+              <span className="flex items-center gap-1">
+                <Paperclip className="w-3 h-3" /> Soporte pendiente
+              </span>
+            </Badge>
+          )}
+          {request.soporte_estado === 'entregado' && (
+            <Badge variant="success">
+              <span className="flex items-center gap-1">
+                <Paperclip className="w-3 h-3" /> Soporte entregado
+              </span>
+            </Badge>
+          )}
+
           {request.attachments && request.attachments.length > 0 && (
             <Badge variant="default">
               <span className="flex items-center gap-1">

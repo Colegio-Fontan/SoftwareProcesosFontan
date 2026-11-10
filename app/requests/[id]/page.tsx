@@ -201,6 +201,9 @@ export default function RequestDetailPage({
   // Puede subir evidencias: dueño, asignado actual, su rol es el actual, o admin — sin importar el estado
   const canUploadEvidence = isOwner || isMyDirectAssignment || isMyRole || isAdmin;
 
+  // El empleado debe subir el soporte de su ausencia
+  const debeSubirSoporte = isOwner && request.soporte_estado === 'pendiente';
+
   // Puede eliminar: dueño cuando nadie ha respondido aún (pendiente), o admin siempre
   const canDelete = (isOwner && request.status === 'pendiente') || isAdmin;
 
@@ -216,6 +219,39 @@ export default function RequestDetailPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          {debeSubirSoporte && (
+            <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-5">
+              <h2 className="text-lg font-bold text-orange-900 flex items-center gap-2">
+                <Paperclip className="w-5 h-5" /> Debes subir el soporte de esta ausencia
+              </h2>
+              <p className="text-sm text-orange-800 mt-1 mb-4">
+                Tu ausencia fue aceptada, pero falta el soporte (incapacidad, constancia de la cita u otro documento).
+                Si pasan 3 días sin subirlo, se le avisará a quien la aprobó.
+              </p>
+              <ImageAttachmentPicker
+                files={newEvidenceFiles}
+                onFilesChange={setNewEvidenceFiles}
+                label="Seleccionar soporte (imagen o PDF)"
+              />
+              {evidenceError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-3 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4" /> {evidenceError}
+                </p>
+              )}
+              {newEvidenceFiles.length > 0 && (
+                <Button onClick={handleUploadEvidence} disabled={uploadingEvidence} className="mt-4 w-full">
+                  {uploadingEvidence ? 'Subiendo...' : `Subir soporte (${newEvidenceFiles.length} archivo${newEvidenceFiles.length > 1 ? 's' : ''})`}
+                </Button>
+              )}
+            </div>
+          )}
+
+          {isOwner && request.soporte_estado === 'entregado' && evidenceSuccess && (
+            <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" /> Soporte entregado. Le avisamos a quien aprobó tu ausencia.
+            </p>
+          )}
+
           <Card>
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -230,6 +266,8 @@ export default function RequestDetailPage({
                   <Badge variant={request.urgency === 'alto' ? 'danger' : request.urgency === 'medio' ? 'warning' : 'default'}>
                     Urgencia: {urgencyLabels[request.urgency]}
                   </Badge>
+                  {request.soporte_estado === 'pendiente' && <Badge variant="warning">Soporte pendiente</Badge>}
+                  {request.soporte_estado === 'entregado' && <Badge variant="success">Soporte entregado</Badge>}
                 </div>
               </div>
             </div>
@@ -410,7 +448,7 @@ export default function RequestDetailPage({
             </Card>
           )}
 
-          {canUploadEvidence && (
+          {canUploadEvidence && !debeSubirSoporte && (
             <Card>
               <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
                 <Upload className="w-5 h-5 text-gray-500" /> Agregar evidencias
@@ -461,7 +499,12 @@ export default function RequestDetailPage({
 
             {canApprove ? (
               <div className="space-y-4">
-                <RequestActions requestId={request.id} currentStatus={request.status} />
+                <RequestActions
+                  requestId={request.id}
+                  currentStatus={request.status}
+                  requestType={request.type}
+                  soporteEstado={request.soporte_estado}
+                />
 
                 <div className="pt-4 border-t">
                   <p className="text-sm text-gray-600 mb-3 font-medium">
